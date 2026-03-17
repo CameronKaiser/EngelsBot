@@ -65,6 +65,7 @@ class Discord_Object_Registry:
 
 class CATEGORIES(Discord_Object_Registry):
     _object_type        = 'channel'
+    STEERING_COMMITTEE  = 1359006513376792647
     PROTEST_COMMITTEE   = 1436423370022584330
     ARCHIVED            = 1354882348654657556
     TICKETS             = 1478466840123670548

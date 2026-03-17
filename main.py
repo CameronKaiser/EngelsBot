@@ -79,28 +79,34 @@ async def on_message_delete(message):
     embed.set_author(name=str(message.author), icon_url=message.author.display_avatar.url)
     embed.add_field(name="Channel", value=message.channel.mention)
 
-    await CHANNELS.AUTO_MOD.send(embed=embed)
+#   Steering related messages shall be sent to the Steering channel rather than the moderator channel for confidentiality
+    if message.channel.category == CATEGORIES.STEERING_COMMITTEE or message.channel.category == CATEGORIES.TICKETS:
+        channel = CHANNELS.STEERING_COMMITTEE
+    else:
+        channel = CHANNELS.AUTO_MOD
+
+    await channel.send(embed=embed)
 
     if message.attachments:
         files = [await a.to_file() for a in message.attachments]
-        await CHANNELS.AUTO_MOD.send(files=files)
+        await channel.send(files=files)
 
         close_embed = discord.Embed(
             title = "Message's attachments included above",
             color =  discord.Color.red()
         )
 
-        await CHANNELS.AUTO_MOD.send(embed=close_embed)
+        await channel.send(embed=close_embed)
 
     if message.embeds:
-        await CHANNELS.AUTO_MOD.send(embeds=message.embeds)
+        await channel.send(embeds=message.embeds)
 
         close_embed = discord.Embed(
             title = "Message's embeds included above",
             color =  discord.Color.red()
         )
 
-        await CHANNELS.AUTO_MOD.send(embed=close_embed)
+        await channel.send(embed=close_embed)
 
 @client.event
 async def on_raw_message_delete(payload: discord.RawMessageDeleteEvent):
