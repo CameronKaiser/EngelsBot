@@ -77,11 +77,11 @@ def grab_square_image():
 
 def generate_spam_warning(message):
 
-    return f'Class traitor detected: {message.author.mention}\n' \
-           f'Location: {message.jump_url}\n'                     \
-           f'Recommended action: Gulag\n\n'                      \
-           f'{ROLES.MODERATOR.mention}\n'                                \
-           f'{ROLES.ADMIN    .mention}'
+    return f'Class traitor detected: {message.author.mention}\n'                                                    \
+           f'Location: {message.jump_url}\n'                                                                         \
+           f'Recommended action: Gulag\n\n'                                                                           \
+           f'{ROLES.MODERATOR.mention if ROLES.ADMIN not in message.author.roles else "(omitting ping for test)"}\n'   \
+           f'{ROLES.ADMIN    .mention if ROLES.ADMIN not in message.author.roles else "(omitting ping for test)"}'
 
 def tableize(array):
 
