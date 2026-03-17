@@ -6,6 +6,10 @@ from   typing  import Optional
 # Third Party
 from   discord import Guild
 
+ROOT_FOLDER = os.path.dirname(os.path.abspath(__file__))
+IMAGE_FILE_PATH = f'{ROOT_FOLDER}/images/'
+FILES_FILE_PATH = f'{ROOT_FOLDER}/files/'
+
 AIRTABLE_API_KEY = os.environ.get('DSA_AIRTABLE_API_KEY')
 DISCORD_API_KEY  = os.environ.get('DSA_DISCORD_API_KEY')
 
@@ -21,9 +25,6 @@ CHAPTER_NAME           = 'Sonoma County'
 AIRTABLE_BASE_ID          = 'appU8994pqzpcf6eK'
 AIRTABLE_MEMBERS_TABLE_ID = 'tbleGngzySQapiSUY'
 AIRTABLE_TICKETS_TABLE_ID = 'tblywbUcY7V0yRoUI'
-
-IMAGE_FILE_PATH = 'images\\'
-FILES_FILE_PATH = 'files\\'
 
 RECRUITMENT_DRIVE_URL = 'https://falldrive.dsausa.org/api/referrals'
 SQUARE_STREAM_URL     = 'https://www.youtube.com/watch?v=KES0RUIXg8s'
