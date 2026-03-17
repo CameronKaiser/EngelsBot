@@ -37,8 +37,9 @@ ENGELS_PONTIFICATE_MIN_DELAY = 60 * 60          # 1 hour
 ENGELS_PONTIFICATE_MAX_DELAY = 3 * 24 * 60 * 60 # 3 days
 
 SPAM_TRIGGERS = [
-    "macbook", "charger", "free", "first come first serve", "perfect condition", "new model", "excellent condition",
-    'perfect for photography enthusiasts', 'dm me if interested', 'still functional and in good shape', 'giving away my old canon'
+    "macbook", "charger", "free", "first come first serve", "perfect condition", "new model", "excellent condition",                #macbook scam
+    'perfect for photography enthusiasts', 'dm me if interested', 'still functional and in good shape', 'giving away my old canon', #canon scam
+    'please join our discord server', 'pay vetted tutors', 'do their homework', 'https://discord.gg/QN24TRp98D', '@everyone'        #homework scam
 ]
 
 class REGEX:
