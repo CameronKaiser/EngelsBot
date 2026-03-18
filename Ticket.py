@@ -162,11 +162,10 @@ class CloseTicketButton(discord.ui.View):
         closer = f'{interaction.user.name} ({interaction.user.display_name})'
 
         try:
-            Airtable.upload_ticket(file_name, closer)
+            Airtable.upload_ticket(file_name, interaction.channel.name, closer)
             os.remove(file_name)
         except Exception as e:
-            bot_channel = interaction.guild.get_channel(1436468298635284520)
-            await bot_channel.send(f'Ticket {interaction.channel.name} was closed but could not be uploaded to Airtable. Consequently, the log file has been preserved - upload it manually. ({e})')
+            await CHANNELS.BOT_TESTING.send(f'Ticket {interaction.channel.name} was closed but could not be uploaded to Airtable. Consequently, the log file has been preserved - upload it manually. ({e})')
 
         await asyncio.sleep(3)
 

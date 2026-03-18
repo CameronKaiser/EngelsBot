@@ -51,9 +51,9 @@ def update_members_table(members):
 
     return True
 
-def upload_ticket(file_name, closer):
+def upload_ticket(file_name, ticket_name, closer):
     table    = api.table(AIRTABLE_BASE_ID, AIRTABLE_TICKETS_TABLE_ID)
-    response = table.create({ 'Name': file_name.replace('.txt', ''), 'Closer': closer }, typecast=True)
+    response = table.create({ 'Name': ticket_name, 'Closer': closer }, typecast=True)
 
     with open(file_name, "rb") as f:
         file_bytes = f.read()

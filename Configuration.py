@@ -6,7 +6,7 @@ from   typing  import Optional
 # Third Party
 from   discord import Guild
 
-ROOT_FOLDER = os.path.dirname(os.path.abspath(__file__))
+ROOT_FOLDER     = os.path.dirname(os.path.abspath(__file__))
 IMAGE_FILE_PATH = f'{ROOT_FOLDER}/images/'
 FILES_FILE_PATH = f'{ROOT_FOLDER}/files/'
 
