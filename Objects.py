@@ -1,5 +1,38 @@
+# Standard Library
+from dataclasses   import dataclass
+
 # Local Modules
 from Configuration import ROLES
+
+@dataclass
+class Quote:
+
+    text        : str
+    number      : int
+    user_id     : int
+    jump_url    : str
+    airtable_id : str
+
+class QuoteRequest:
+
+    valid  = None
+    number = None
+    delete = None
+
+    def __init__(self, request_string):
+        parameters = request_string.split()
+
+        if parameters[0] == '.quote':
+            self.valid = True
+
+        for parameter in parameters:
+            parameter = parameter.replace('#', '')
+
+            if parameter == 'delete':
+                self.delete = True
+
+            if parameter.isdigit():
+                self.number = int(parameter)
 
 class Member:
 

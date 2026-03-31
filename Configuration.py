@@ -22,9 +22,11 @@ GUILD: Optional[Guild] = None # Will be hydrated upon connection
 GUILD_ID               = 1308831013237035018
 CHAPTER_NAME           = 'Sonoma County'
 
-AIRTABLE_BASE_ID          = 'appU8994pqzpcf6eK'
-AIRTABLE_MEMBERS_TABLE_ID = 'tbleGngzySQapiSUY'
-AIRTABLE_TICKETS_TABLE_ID = 'tblywbUcY7V0yRoUI'
+AIRTABLE_BASE_ID            = 'appU8994pqzpcf6eK'
+AIRTABLE_MEMBERS_TABLE_ID   = 'tbleGngzySQapiSUY'
+AIRTABLE_TICKETS_TABLE_ID   = 'tblywbUcY7V0yRoUI'
+AIRTABLE_QUOTES_TABLE_ID    = 'tblasWZwOwKku5IJB'
+AIRTABLE_VARIABLES_TABLE_ID = 'tbl3rwQ7zKPZmCU6E'
 
 RECRUITMENT_DRIVE_URL = 'https://falldrive.dsausa.org/api/referrals'
 SQUARE_STREAM_URL     = 'https://www.youtube.com/watch?v=KES0RUIXg8s'
@@ -82,6 +84,7 @@ class CHANNELS(Discord_Object_Registry):
     RULES_AND_ROLES     = 1308831557036933272
     CALENDAR            = 1355288280870027465
     PERSONAL_REQUESTS   = 1426780469005123614
+    QUOTE_PERMITTED     = [1436468298635284520, 1355310818060926977, 1316127393735245845]
 
 class ROLES(Discord_Object_Registry):
     _object_type        = 'role'
