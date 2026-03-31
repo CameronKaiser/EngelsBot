@@ -1,8 +1,13 @@
 # Third Party
+from random import randint
+
 from   pyairtable import Api
+from pyairtable.formulas import AND, GTE, Field, match
 
 # Local Modules
-from   Configuration import (AIRTABLE_API_KEY, AIRTABLE_BASE_ID, AIRTABLE_MEMBERS_TABLE_ID, AIRTABLE_TICKETS_TABLE_ID)
+from   Configuration import (AIRTABLE_API_KEY, AIRTABLE_BASE_ID, AIRTABLE_MEMBERS_TABLE_ID, AIRTABLE_TICKETS_TABLE_ID, AIRTABLE_VARIABLES_TABLE_ID, AIRTABLE_QUOTES_TABLE_ID)
+from   Objects       import Quote
+import Mutables
 
 api = Api(AIRTABLE_API_KEY)
 
@@ -59,3 +64,43 @@ def upload_ticket(file_name, ticket_name, closer):
         file_bytes = f.read()
 
     table.upload_attachment(response['id'], 'File', file_name, content=file_bytes, content_type='text/plain')
+
+async def get_quotes():
+
+    try:
+        quote_table = api.table(AIRTABLE_BASE_ID, AIRTABLE_QUOTES_TABLE_ID)
+
+        quote_records = quote_table.all()
+
+        for record in quote_records:
+            text        =     record['fields']['Quote'     ]
+            number      =     record['fields']['Number'    ]
+            user_id     = int(record['fields']['User ID'   ])
+            jump_url    =     record['fields']['Jump URL'  ]
+            airtable_id =     record['id'    ]
+            Mutables.quote_cache[number] = Quote(text,number,user_id,jump_url, airtable_id)
+
+        print(f'Successfully retrieved {len(quote_records)} quotes!')
+
+    except Exception as error:
+        print(f'Failed to retrieve quotes: {error}')
+
+def upload_quote(quote, user_id, message_id, jump_url):
+    try:
+        quote_table  = api.table(AIRTABLE_BASE_ID, AIRTABLE_QUOTES_TABLE_ID)
+        quote_record = quote_table.create({ 'Quote': quote, 'User ID': str(user_id) , 'Message ID': str(message_id), 'Jump URL': jump_url, 'Variable': 'Quote'}, typecast=True)
+
+        return quote_record
+
+    except Exception as error:
+        return {'error': error}
+
+def delete_quote(quote):
+    try:
+        quote_table  = api.table(AIRTABLE_BASE_ID, AIRTABLE_QUOTES_TABLE_ID)
+        response     = quote_table.delete(quote.airtable_id)
+
+        del Mutables.quote_cache[quote.number]
+
+    except Exception as error:
+        return {'error': error}

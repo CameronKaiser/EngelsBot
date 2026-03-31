@@ -13,6 +13,7 @@ import discord.ext
 import Configuration as C
 import Airtable
 import HelperMethods
+import Objects
 import RecruitmentDrive
 import Ticket
 import Mutables
@@ -20,7 +21,7 @@ import Mutables
 # Easy Access
 from HelperMethods import is_admin
 from Configuration import (DISCORD_API_KEY, CATEGORIES, CHANNELS, ROLES, MEMBERS, MESSAGES, EMOJIS, GUILD_ID, REGEX)
-from Objects       import Member
+from Objects import Member, Quote
 
 intents                 = discord.Intents.default()
 intents.message_content = True
@@ -38,6 +39,8 @@ tree   = discord.app_commands.CommandTree(client)
 @client.event
 async def on_ready():
     print(f'{client.user.name} has connected to Discord!')
+
+    client.loop.create_task(Airtable.get_quotes())
 
     await HelperMethods.get_predefined_objects(client)
 
@@ -134,6 +137,20 @@ async def on_raw_reaction_add(payload):
 
     if user.bot:
         return
+
+    if str(emoji) == '💬':
+        channel = await C.GUILD.fetch_channel(payload.channel_id)
+        message = await channel.fetch_message (payload.message_id)
+
+        if message.content and not message.author.bot:
+            if payload.message_id not in Mutables.quote_cache:
+                quote = Airtable.upload_quote(message.content, message.author.id, message.id, message.jump_url)
+                quote_number = int(quote['fields']['Number'])
+
+                Mutables.quote_cache[quote_number] = Quote(message.content, quote_number, int(message.author.id), message.jump_url, quote['id'])
+                print(f"Added quote {quote['fields']['Number']} to cache ({message.id})")
+
+                await channel.send(f"Quote #{quote['fields']['Number']} has been added by {user.mention}: [({message.id})]({message.jump_url})")
 
     if MESSAGES.COMMITTEE_SIGNUP is not None and payload.message_id == MESSAGES.COMMITTEE_SIGNUP.id:
     #   Committee Reaction
@@ -522,6 +539,56 @@ async def on_message(message):
     if spam_score >= 3:
         await message.add_reaction('🤨')
         await CHANNELS.AUTO_MOD.send(HelperMethods.generate_spam_warning(message))
+        return
+
+    if '.quote' in text and message.channel in CHANNELS.QUOTE_PERMITTED:
+
+        quote_request = Objects.QuoteRequest(text)
+
+        if not quote_request.valid:
+            await message.channel.send('idk what you mean dawg')
+            return
+
+        quote_number = quote_request.number
+        if quote_request.delete:
+            if quote_number in Mutables.quote_cache:
+                try:
+                    Airtable.delete_quote(Mutables.quote_cache[quote_number])
+                    await message.channel.send(f'Quote #{quote_number} deleted')
+
+                except Exception:
+                    await message.channel.send(f'Unable to delete quote ({Exception})')
+
+                return
+
+            if quote_number:
+                await message.channel.send(f'quote #{quote_number} does not exist')
+
+            else:
+                await message.channel.send(f'give me a number numbnuts')
+
+            return
+
+        if quote_number:
+            quote = Mutables.quote_cache.get(quote_number)
+            if not quote:
+                await message.channel.send(f'quote #{quote_number} does not exist')
+                return
+        else:
+            if len(Mutables.quote_cache) == 0:
+                await message.channel.send('there *are* no quotes!!!')
+                return
+
+            quote = random.choice(list(Mutables.quote_cache.values()))
+
+        embed = discord.Embed(
+            title       = f"Quote #{quote.number}",
+            description = f'{quote.text}\n'
+                          f'• <@!{quote.user_id}> [(See Message)]({quote.jump_url})',
+            color       = discord.Color.blue()
+        )
+
+        await message.channel.send(embed=embed)
         return
 
 #   Grabs a realtime photo of Old Courthouse Square using the livestream (currently broken due to youtube changing URL functionality)
