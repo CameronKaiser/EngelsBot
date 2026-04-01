@@ -76,9 +76,10 @@ async def get_quotes():
             text        =     record['fields']['Quote'     ]
             number      =     record['fields']['Number'    ]
             user_id     = int(record['fields']['User ID'   ])
+            message_id  = int(record['fields']['Message ID'])
             jump_url    =     record['fields']['Jump URL'  ]
             airtable_id =     record['id'    ]
-            Mutables.quote_cache[number] = Quote(text,number,user_id,jump_url, airtable_id)
+            Mutables.quote_cache[number] = Quote(text, number, user_id, jump_url, airtable_id, message_id)
 
         print(f'Successfully retrieved {len(quote_records)} quotes!')
 

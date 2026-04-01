@@ -12,6 +12,7 @@ class Quote:
     user_id     : int
     jump_url    : str
     airtable_id : str
+    message_id  : int
 
 class QuoteRequest:
 

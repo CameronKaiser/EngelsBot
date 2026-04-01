@@ -140,17 +140,22 @@ async def on_raw_reaction_add(payload):
 
     if str(emoji) == '💬':
         channel = await C.GUILD.fetch_channel(payload.channel_id)
-        message = await channel.fetch_message (payload.message_id)
+        message = await channel.fetch_message(payload.message_id)
 
         if message.content and not message.author.bot:
-            if payload.message_id not in Mutables.quote_cache:
-                quote = Airtable.upload_quote(message.content, message.author.id, message.id, message.jump_url)
-                quote_number = int(quote['fields']['Number'])
 
-                Mutables.quote_cache[quote_number] = Quote(message.content, quote_number, int(message.author.id), message.jump_url, quote['id'])
-                print(f"Added quote {quote['fields']['Number']} to cache ({message.id})")
+            if any(quote.message_id == message.id for quote in Mutables.quote_cache.values()):
+                return
 
-                await channel.send(f"Quote #{quote['fields']['Number']} has been added by {user.mention}: [({message.id})]({message.jump_url})")
+            await message.add_reaction("💬")
+
+            quote = Airtable.upload_quote(message.content, message.author.id, message.id, message.jump_url)
+            quote_number = int(quote['fields']['Number'])
+
+            Mutables.quote_cache[quote_number] = Quote(message.content, quote_number, int(message.author.id), message.jump_url, quote['id'], message.id)
+            print(f"Added quote {quote['fields']['Number']} to cache ({message.id})")
+
+            await channel.send(f"Quote #{quote['fields']['Number']} has been added by {user.mention}: [({message.id})]({message.jump_url})")
 
     if MESSAGES.COMMITTEE_SIGNUP is not None and payload.message_id == MESSAGES.COMMITTEE_SIGNUP.id:
     #   Committee Reaction
