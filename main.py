@@ -532,6 +532,8 @@ async def on_message(message):
     if message.author == MEMBERS.ENGELS_BOT or server is None or server != C.GUILD:
         return
 
+    admin = is_admin(message.author.roles)
+
     text     = message.content.lower()
     raw_text = message.content
 
@@ -556,6 +558,10 @@ async def on_message(message):
 
         quote_number = quote_request.number
         if quote_request.delete:
+            if not admin:
+                await message.channel.send("sorry boss, that's for admins only")  # type: ignore
+                return
+
             if quote_number in Mutables.quote_cache:
                 try:
                     Airtable.delete_quote(Mutables.quote_cache[quote_number])
@@ -590,7 +596,7 @@ async def on_message(message):
             title       = f"Quote #{quote.number}",
             description = f'{quote.text}\n'
                           f'• <@!{quote.user_id}> [(See Message)]({quote.jump_url})',
-            color       = discord.Color.blue()
+            color       = MEMBERS.ENGELS_BOT.color
         )
 
         await message.channel.send(embed=embed)
