@@ -1,5 +1,6 @@
 # Standard Library
 import asyncio
+import datetime
 
 # Third Party
 import cv2
@@ -122,3 +123,49 @@ def tableize(array):
     table += '```'
 
     return table
+
+async def create_forum_digest(client, channel_to_post):
+    start_date = datetime.datetime.now() - datetime.timedelta(weeks=1)
+    threads    = {}
+
+    for channel in C.GUILD.text_channels:
+
+        async for thread in channel.archived_threads(limit=None):
+            if not thread.permissions_for(ROLES.DSA_MEMBER).read_messages:
+                continue
+
+            messages = 0
+            async for message in thread.history(after=start_date, limit=None):
+                messages += 1
+
+            threads[thread] = messages
+
+
+    for thread in C.GUILD.threads:
+        if not thread.permissions_for(ROLES.DSA_MEMBER).read_messages:
+            continue
+
+        messages = 0
+        async for message in thread.history(after=start_date, limit=None):
+            messages += 1
+
+        if threads.get(thread):
+            threads[thread] += messages
+        else:
+            threads[thread]  = messages
+
+    response = f"## Weekly Forum Digest\n" \
+               f"Here are the most active threads / forum posts you may have missed this week!"
+
+    sorted_threads = sorted(threads.items(), key=lambda x: x[1], reverse=True)
+
+    i = 1
+    for thread, count in sorted_threads:
+        response += f'\n{i}. {thread.mention} - {count} messages'
+
+        if i == 10:
+            break
+
+        i += 1
+
+    await channel_to_post.send(response)
