@@ -3,6 +3,8 @@ import asyncio
 import datetime
 import random
 import statistics
+from apscheduler.schedulers.asyncio import AsyncIOScheduler
+from apscheduler.triggers.cron      import CronTrigger
 
 # Third party
 import numpy as np
@@ -29,8 +31,9 @@ intents.members         = True
 intents.reactions       = True
 intents.dm_reactions    = True
 
-client = discord.Client(intents=intents)
-tree   = discord.app_commands.CommandTree(client)
+client    = discord.Client(intents=intents)
+tree      = discord.app_commands.CommandTree(client)
+scheduler = AsyncIOScheduler()
 
 # -------------------------------------------------------------------------------------------------------------------------------------------------------------
 #    ~ Initialization ~
@@ -51,6 +54,10 @@ async def on_ready():
         client.loop.create_task(random_thought(CHANNELS.DSA_CHATTING))
 
     await CHANNELS.BOT_TESTING.send("Engels Online")
+
+    if not scheduler.running:
+        scheduler.start()
+        scheduler.add_job(HelperMethods.create_forum_digest, CronTrigger(day_of_week='sun', hour=9), args=[client, CHANNELS.DSA_BUSINESS])
 
 # -------------------------------------------------------------------------------------------------------------------------------------------------------------
 #    ~ Cron Jobs ~
@@ -263,6 +270,17 @@ async def slash_command(interaction: discord.Interaction):
 
     await tree.sync(guild=discord.Object(id=GUILD_ID))
     await interaction.response.send_message('Commands Synced!') # type: ignore
+
+@tree.command(name="summon_forum_digest", description="Summons a forum digest ranking threads and forum posts", guild=discord.Object(id=GUILD_ID))
+async def slash_command(interaction: discord.Interaction):
+    if not is_admin(interaction.user.roles):
+        await interaction.response.send_message('sorry boss, admin only') # type: ignore
+        return
+
+    await interaction.response.defer()  # type: ignore
+
+    await HelperMethods.create_forum_digest(client, interaction.channel)
+    await interaction.delete_original_response()
 
 @tree.command(name="get_channel_leaderboard", description="Gets statistics on channels. Don't spam this", guild=discord.Object(id=GUILD_ID))
 async def slash_command(interaction: discord.Interaction, months: int):
