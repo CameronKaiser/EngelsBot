@@ -11,6 +11,7 @@ import numpy as np
 import discord
 import discord.ext
 
+import Configuration
 # Local Modules
 import Configuration as C
 import Airtable
@@ -21,6 +22,7 @@ import Ticket
 import Mutables
 
 # Easy Access
+from GoogleAPI import GoogleApi
 from HelperMethods import is_admin
 from Configuration import (DISCORD_API_KEY, CATEGORIES, CHANNELS, ROLES, MEMBERS, MESSAGES, EMOJIS, GUILD_ID, REGEX)
 from Objects import Member, Quote
@@ -54,6 +56,9 @@ async def on_ready():
         client.loop.create_task(random_thought(CHANNELS.DSA_CHATTING))
 
     await CHANNELS.BOT_TESTING.send("Engels Online")
+
+    client.google_api = GoogleApi(Configuration.GOOGLE_CREDENTIAL_JSON)
+    print('Google API initialized')
 
     if not scheduler.running:
         scheduler.start()
@@ -270,6 +275,146 @@ async def slash_command(interaction: discord.Interaction):
 
     await tree.sync(guild=discord.Object(id=GUILD_ID))
     await interaction.response.send_message('Commands Synced!') # type: ignore
+
+@tree.command(name="sync_events", description="Syncs all events from Solidarity Tech to Google Calendar", guild=discord.Object(id=GUILD_ID))
+async def slash_command(interaction: discord.Interaction):
+    if not is_admin(interaction.user.roles):
+        await interaction.response.send_message('sorry boss, admin only') # type: ignore
+        return
+
+    await interaction.response.defer()  # type: ignore
+
+    event = {
+      "id": 13631,
+      "title": "SnoCo DSA 2026 Chapter Convention",
+      "scope_id": 301,
+      "scope_type": "Organization",
+      "event_type": "in_person",
+      "tags": [],
+      "campaign_tags": [],
+      "event_sessions": [
+        {
+          "id": 32499,
+          "mobilize_event_id": 13631,
+          "start_time": "2026-04-11T15:00:00.000-04:00",
+          "end_time": "2026-04-11T19:30:00.000-04:00",
+          "title": "SnoCo DSA 2026 Chapter Convention",
+          "created_at": "2026-04-04T13:47:12.554-04:00",
+          "updated_at": "2026-04-04T13:47:12.575-04:00",
+          "location_name": "Snohomish County PUD",
+          "location_data": {
+            "components": [
+              {
+                "long_name": "2320",
+                "short_name": "2320",
+                "types": [
+                  "street_number"
+                ]
+              },
+              {
+                "long_name": "California Street",
+                "short_name": "California St",
+                "types": [
+                  "route"
+                ]
+              },
+              {
+                "long_name": "Riverside",
+                "short_name": "Riverside",
+                "types": [
+                  "neighborhood",
+                  "political"
+                ]
+              },
+              {
+                "long_name": "Everett",
+                "short_name": "Everett",
+                "types": [
+                  "locality",
+                  "political"
+                ]
+              },
+              {
+                "long_name": "Snohomish County",
+                "short_name": "Snohomish County",
+                "types": [
+                  "administrative_area_level_2",
+                  "political"
+                ]
+              },
+              {
+                "long_name": "Washington",
+                "short_name": "WA",
+                "types": [
+                  "administrative_area_level_1",
+                  "political"
+                ]
+              },
+              {
+                "long_name": "United States",
+                "short_name": "US",
+                "types": [
+                  "country",
+                  "political"
+                ]
+              },
+              {
+                "long_name": "98201",
+                "short_name": "98201",
+                "types": [
+                  "postal_code"
+                ]
+              }
+            ],
+            "coordinates": {
+              "lat": 47.9801061,
+              "lng": -122.1980757
+            },
+            "address_city": "Everett",
+            "full_address": "Snohomish County PUD, California Street, Everett, WA, USA",
+            "address_state": "WA",
+            "address_line_1": "2320 California Street",
+            "address_country": "US",
+            "address_postal_code": "98201"
+          },
+          "lonlat": "POINT (-122.1980757 47.9801061)",
+          "location_address": "Snohomish County PUD, California Street, Everett, WA, USA",
+          "max_capacity": 0,
+          "event_type": "in_person",
+          "paired_meci_id": 32500,
+          "rsvp_count": 20,
+          "attendance_count": 0,
+          "host_tools_url": "https://www.solidarity.tech/h/-bAhzvUxwB7pcpOK1Q1EkuM4-9zkLS19333KAYTverE",
+          "primary_session_id": 32499
+        },
+        {
+          "id": 32500,
+          "mobilize_event_id": 13631,
+          "start_time": "2026-04-11T15:00:00.000-04:00",
+          "end_time": "2026-04-11T19:30:00.000-04:00",
+          "title": "SnoCo DSA 2026 Chapter Convention",
+          "created_at": "2026-04-04T13:47:12.564-04:00",
+          "updated_at": "2026-04-04T13:47:12.580-04:00",
+          "location_address": "https://dsausa.zoom.us/meeting/register/xyylgky-TAa8qCVFHkO-Pw#/registration",
+          "event_type": "virtual",
+          "paired_meci_id": 32499,
+          "rsvp_count": 4,
+          "attendance_count": 0,
+          "host_tools_url": "https://www.solidarity.tech/h/zz_hRY2og3Sk4QlmpWaMzGwZjM-K0IHeFqJD5HXzFcI",
+          "primary_session_id": 32500
+        }
+      ],
+      "event_page_url": "https://snocodsa.solidarity.tech/snoco-dsa-2026-chapter-convention",
+      "event_page_id": 13048,
+      "description": "Attend our annual Chapter Convention to join SnoCo DSA members in announcing our new chapter officers, discussing upcoming issues and events, voting on member-submitted resolutions, and other agenda items. We are stronger together, let’s organize in our community!\nThis event will be held in-person at the Snohomish County PUD. To attend virtually you can register on Zoom here.\nNeed accommodations to join this event? Fill out the SnoCo DSA accommodations form so we can make this event as accessible as possible to all of our members.",
+      "primary_event_id": 13631,
+      "created_at": "2026-04-04T13:47:12.536-04:00"
+    }
+
+    created_event = await interaction.client.google_api.create_event(event)
+    print(created_event)
+
+    await interaction.followup.send(f'Events synced!')
 
 @tree.command(name="summon_forum_digest", description="Summons a forum digest ranking threads and forum posts", guild=discord.Object(id=GUILD_ID))
 async def slash_command(interaction: discord.Interaction):

@@ -29,6 +29,8 @@ AIRTABLE_TICKETS_TABLE_ID   = 'tblywbUcY7V0yRoUI'
 AIRTABLE_QUOTES_TABLE_ID    = 'tblasWZwOwKku5IJB'
 AIRTABLE_VARIABLES_TABLE_ID = 'tbl3rwQ7zKPZmCU6E'
 
+GOOGLE_CALENDAR_ID          = '15c2778ff1500632209a3609f5dea164325b8db50375c24ebea8e22e3ab8dca8@group.calendar.google.com'
+
 RECRUITMENT_DRIVE_URL = 'https://falldrive.dsausa.org/api/referrals'
 SQUARE_STREAM_URL     = 'https://www.youtube.com/watch?v=KES0RUIXg8s'
 
