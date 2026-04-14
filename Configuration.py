@@ -10,8 +10,9 @@ ROOT_FOLDER     = os.path.dirname(os.path.abspath(__file__))
 IMAGE_FILE_PATH = f'{ROOT_FOLDER}/images/'
 FILES_FILE_PATH = f'{ROOT_FOLDER}/files/'
 
-AIRTABLE_API_KEY = os.environ.get('DSA_AIRTABLE_API_KEY')
-DISCORD_API_KEY  = os.environ.get('DSA_DISCORD_API_KEY')
+AIRTABLE_API_KEY       = os.environ.get('DSA_AIRTABLE_API_KEY'      )
+DISCORD_API_KEY        = os.environ.get('DSA_DISCORD_API_KEY'       )
+GOOGLE_CREDENTIAL_JSON = os.environ.get('DSA_GOOGLE_CREDENTIAL_JSON')
 
 SMTP_HOST = os.environ.get('DSA_SMTP_HOST')
 SMTP_PORT = 465

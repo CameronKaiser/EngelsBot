@@ -6,3 +6,5 @@ __pycache__/
 .idea/
 .DS_Store
 Thumbs.db
+credentials.json
+GoogleAuth.py
