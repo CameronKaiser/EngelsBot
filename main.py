@@ -57,7 +57,7 @@ async def on_ready():
 
     await CHANNELS.BOT_TESTING.send("Engels Online")
 
-    client.google_api = GoogleApi(Configuration.GOOGLE_CREDENTIAL_JSON)
+    client.google_api = GoogleApi(C.GOOGLE_CREDENTIAL_JSON)
     print('Google API initialized')
 
     if not scheduler.running:
@@ -296,8 +296,8 @@ async def slash_command(interaction: discord.Interaction):
         {
           "id": 32499,
           "mobilize_event_id": 13631,
-          "start_time": "2026-04-11T15:00:00.000-04:00",
-          "end_time": "2026-04-11T19:30:00.000-04:00",
+          "start_time": "2026-04-15T15:00:00.000-04:00",
+          "end_time": "2026-04-15T19:30:00.000-04:00",
           "title": "SnoCo DSA 2026 Chapter Convention",
           "created_at": "2026-04-04T13:47:12.554-04:00",
           "updated_at": "2026-04-04T13:47:12.575-04:00",

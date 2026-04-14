@@ -48,7 +48,8 @@ class GoogleApi:
             body       = payload
         )
 
-        print(event)
+        print(payload)
+
 
         self.counter += 1
 
@@ -71,10 +72,10 @@ class GoogleApi:
             )
             return await self._run(request.execute)
 
-    async def convert_solidarity_event(self, event):
+    def convert_solidarity_event(self, event):
         payload = {}
 
-        event_sessions = payload.get('event_sessions')
+        event_sessions = event.get('event_sessions')
 
         if not event_sessions:
             return None
