@@ -6,12 +6,13 @@ import datetime
 import cv2
 import streamlink
 
+import Configuration
 # Local Module
 import Mutables
 import Configuration as C
 
 # Easy Access
-from Configuration import (ROLES, GUILD_ID, REGISTRIES)
+from Configuration import (ROLES, GUILD_ID, REGISTRIES, BRANCHES, Branch)
 
 def is_admin(roles):
     for role in roles:
@@ -61,6 +62,16 @@ async def get_predefined_objects(client):
                 f'Ensure the ID is correct and the bot has access to them - {objects_processed.failures}', end='')
 
         print()
+
+async def get_branches(client):
+    for branch in BRANCHES:
+        branch_data = BRANCHES[branch]
+        try:
+            BRANCHES[branch] = Branch(branch_data, client)
+
+            print(f"Branch {branch_data['name']} successfully retrieved.")
+        except Exception as error:
+            print(f"Could not retrieve branch {branch_data['name']} - {error}")
 
 def grab_square_image():
     url = C.SQUARE_STREAM_URL  # Replace with actual ID

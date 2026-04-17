@@ -15,7 +15,6 @@ import discord.ext
 import Configuration as C
 import Airtable
 import HelperMethods
-import Objects
 import RecruitmentDrive
 import Ticket
 import Mutables
@@ -23,13 +22,15 @@ import Mutables
 # Easy Access
 from HelperMethods import is_admin
 from Configuration import (DISCORD_API_KEY, CATEGORIES, CHANNELS, ROLES, MEMBERS, MESSAGES, EMOJIS, GUILD_ID, REGEX)
-from Objects import Member, Quote
+from Models        import Member, Quote, QuoteRequest
+import SolidarityAPI
 
 intents                 = discord.Intents.default()
 intents.message_content = True
 intents.members         = True
 intents.reactions       = True
 intents.dm_reactions    = True
+
 
 client    = discord.Client(intents=intents)
 tree      = discord.app_commands.CommandTree(client)
@@ -41,23 +42,30 @@ scheduler = AsyncIOScheduler()
 
 @client.event
 async def on_ready():
+    client.solidarity_api = SolidarityAPI.SolidarityAPI(C.SOLIDARITY_API_KEY)
+
     print(f'{client.user.name} has connected to Discord!')
 
     client.loop.create_task(Airtable.get_quotes())
 
     await HelperMethods.get_predefined_objects(client)
+    await HelperMethods.get_branches(client)
 
-    client.add_view(Ticket.CreateTicketButton())
-    client.add_view(Ticket.CloseTicketButton())
+    client.add_view(Ticket       .CreateTicketButton())
+    client.add_view(Ticket       .CloseTicketButton ())
+    client.add_view(SolidarityAPI.VerifyButton      ())
 
     if CHANNELS.DSA_CHATTING:
         client.loop.create_task(random_thought(CHANNELS.DSA_CHATTING))
 
     await CHANNELS.BOT_TESTING.send("Engels Online")
 
+    await client.solidarity_api.get_users()
+
     if not scheduler.running:
         scheduler.start()
         scheduler.add_job(HelperMethods.create_forum_digest, CronTrigger(day_of_week='sun', hour=9), args=[client, CHANNELS.DSA_BUSINESS])
+        scheduler.add_job(client.solidarity_api.get_users  , CronTrigger(hour='0,5-23'            )                                      )
 
 # -------------------------------------------------------------------------------------------------------------------------------------------------------------
 #    ~ Cron Jobs ~
@@ -74,6 +82,21 @@ async def random_thought(channel):
 # -------------------------------------------------------------------------------------------------------------------------------------------------------------
 #    ~ Webhooks ~
 # -------------------------------------------------------------------------------------------------------------------------------------------------------------
+
+# @client.event
+#async def on_member_join(member):
+#    embed = discord.Embed(
+#        title="DSA Member Verification",
+#        description=f"Verifying your DSA membership gives you access to a wealth of channels we use to organize! If you're a member (or once you become one), [click here to verify]({MESSAGES.VERIFY_BUTTON.jump_url})!",
+#        color=discord.Color.red()
+#    )
+#
+#    message = f"Hi {member.mention}, welcome to the {C.CHAPTER_NAME} DSA Discord server!\n\n \
+#                Please introduce yourself here!\n                                         \
+#                What are your name and pronouns? How did you hear about us? What got you interested in socialism? Are you a DSA member? Are you a member of any other organizations (Indivisible, WFP, etc)?\n\n \
+#                Then check out {CHANNELS.ABOUT.mention} to get acquainted with us and {CHANNELS.RULES_AND_ROLES.mention} to read our rules and select your roles!"
+#
+#    await CHANNELS.BOT_TESTING.send(content=message, embed=embed)
 
 @client.event
 async def on_message_delete(message):
@@ -279,12 +302,35 @@ async def slash_command(interaction: discord.Interaction):
 
     await interaction.response.defer()  # type: ignore
 
-    await HelperMethods.create_forum_digest(client, interaction.channel)
-    await interaction.delete_original_response()
+    await HelperMethods.create_forum_digest     (client, interaction.channel)
+    await interaction  .delete_original_response(                           )
+
+@tree.command(name="simulate_user_join", description="Simulates the joining of a new discord user for testing", guild=discord.Object(id=GUILD_ID))
+async def slash_command(interaction: discord.Interaction):
+    if not is_admin(interaction.user.roles):
+        await interaction.response.send_message('sorry boss, admin only') # type: ignore
+        return
+
+    embed = discord.Embed(
+        title       = "DSA Member Verification",
+        description = f"Verifying your DSA membership gives you access to a wealth of channels we use to organize! If you're a member (or once you become one), [click here to verify]({MESSAGES.VERIFY_BUTTON.jump_url})!",
+        color       = discord.Color.red(),
+        url         = MESSAGES.VERIFY_BUTTON.jump_url
+    )
+
+    message = f"Hi {interaction.user.mention}, welcome to the {C.CHAPTER_NAME} DSA Discord server! {EMOJIS.ROSE if EMOJIS.ROSE else '🌹'}\n\n" \
+              f"Please introduce yourself here!\n"                                                      \
+              f"What are your name and pronouns? How did you hear about us? What got you interested in socialism? Are you a DSA member? Are you a member of any other organizations (Indivisible, WFP, etc)?\n\n" \
+              f"Then check out {CHANNELS.ABOUT.mention} to get acquainted with us and {CHANNELS.RULES_AND_ROLES.mention} to read our rules and select your roles!"
+
+    await CHANNELS.BOT_TESTING.send(content=message, embed=embed)
+    await interaction.response.send_message(
+        content   = f"User join simulated in {CHANNELS.BOT_TESTING}",
+        ephemeral = True)
 
 @tree.command(name="get_channel_leaderboard", description="Gets statistics on channels. Don't spam this", guild=discord.Object(id=GUILD_ID))
 async def slash_command(interaction: discord.Interaction, months: int):
-    if not HelperMethods.is_admin(interaction.user.roles):
+    if not is_admin(interaction.user.roles):
         await interaction.response.send_message("sorry boss, that's for admins only") # type: ignore
         return
 
@@ -362,6 +408,26 @@ async def slash_command(interaction: discord.Interaction, channel_id: str):
         channel = await client.fetch_channel(int(channel_id))
         message = await channel.send(embed=embed, view=Ticket.CreateTicketButton())
         await interaction.response.send_message(f'Ticket System generated at: {message.jump_url}') # type: ignore
+
+    except Exception as e:
+        await interaction.response.send_message(f'shit borked idk, prolly add a proper channel ID ({e})') # type: ignore
+
+@tree.command(name="spawn_verify_system", description="Spawns the verification system in the channel input", guild=discord.Object(id=GUILD_ID))
+async def slash_command(interaction: discord.Interaction, channel_id: str):
+    if not is_admin(interaction.user.roles):
+        await interaction.response.send_message("sorry boss, that's for admins only") # type: ignore
+        return
+
+    try:
+        embed = discord.Embed(
+            title       = "DSA Member Verification",
+            description = 'Verifying your DSA membership gives you access to a wealth of channels we use to organize!',
+            color       = discord.Color.red()
+        )
+
+        channel = await client.fetch_channel(int(channel_id))
+        message = await channel.send(embed=embed, view=SolidarityAPI.VerifyButton())
+        await interaction.response.send_message(f'Verification system generated at: {message.jump_url}') # type: ignore
 
     except Exception as e:
         await interaction.response.send_message(f'shit borked idk, prolly add a proper channel ID ({e})') # type: ignore
@@ -568,7 +634,7 @@ async def on_message(message):
 
     if '.quote' in text and message.channel in CHANNELS.QUOTE_PERMITTED:
 
-        quote_request = Objects.QuoteRequest(text)
+        quote_request = QuoteRequest(text)
 
         if not quote_request.valid:
             await message.channel.send('idk what you mean dawg')
@@ -585,8 +651,8 @@ async def on_message(message):
                     Airtable.delete_quote(Mutables.quote_cache[quote_number])
                     await message.channel.send(f'Quote #{quote_number} deleted')
 
-                except Exception:
-                    await message.channel.send(f'Unable to delete quote ({Exception})')
+                except Exception as error:
+                    await message.channel.send(f'Unable to delete quote ({error})')
 
                 return
 
@@ -714,6 +780,7 @@ async def on_message(message):
 
     if 'avakian' in text:
         await message.channel.send(file=discord.File(f'{C.IMAGE_FILE_PATH}avakian_meme.jpg'))
+
 
 client.run(DISCORD_API_KEY)
 
