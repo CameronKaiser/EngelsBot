@@ -1,8 +1,30 @@
-# Standard Library
-from dataclasses   import dataclass
-
 # Local Modules
+from typing import Any, Dict, Optional
+from dataclasses import dataclass
+
+# Easy Access
 from Configuration import ROLES
+
+@dataclass
+class Endpoint:
+    url    : str
+    method : str
+
+@dataclass
+class Response:
+    status  : int
+    url     : str
+    headers : Dict[str, str]
+    json    : Optional[Dict[str, Any]]
+
+    @property
+    def ok(self) -> bool:
+        return 200 <= self.status < 300
+
+class SolidarityUser:
+
+    def __init__(self, user):
+        self.data = user
 
 @dataclass
 class Quote:
@@ -39,9 +61,9 @@ class Member:
 
     def __init__(self, member):
 
-        committees = []
+        committees    = []
         organizations = []
-        other_roles = []
+        other_roles   = []
 
         roles = member.roles
 
@@ -57,15 +79,15 @@ class Member:
         organizations.sort()
         other_roles.sort()
 
-        self.username      = member.name
-        self.nickname      = member.display_name
-        self.committees    = committees
-        self.organizations = organizations
-        self.roles         = other_roles
-        self.avatar        = member.display_avatar.url
-        self.message_count = 0
-        self.relative_activity_level      = None
-        self.activity_level = None
+        self.username                = member.name
+        self.nickname                = member.display_name
+        self.committees              = committees
+        self.organizations           = organizations
+        self.roles                   = other_roles
+        self.avatar                  = member.display_avatar.url
+        self.message_count           = 0
+        self.relative_activity_level = None
+        self.activity_level          = None
 
     def to_csv_line(self):
         committee_string    = ', '.join(self.committees)

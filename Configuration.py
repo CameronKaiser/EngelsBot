@@ -10,8 +10,9 @@ ROOT_FOLDER     = os.path.dirname(os.path.abspath(__file__))
 IMAGE_FILE_PATH = f'{ROOT_FOLDER}/images/'
 FILES_FILE_PATH = f'{ROOT_FOLDER}/files/'
 
-AIRTABLE_API_KEY = os.environ.get('DSA_AIRTABLE_API_KEY')
-DISCORD_API_KEY  = os.environ.get('DSA_DISCORD_API_KEY')
+SOLIDARITY_API_KEY = os.environ.get('DSA_SOLIDARITY_API_KEY')
+AIRTABLE_API_KEY   = os.environ.get('DSA_AIRTABLE_API_KEY'  )
+DISCORD_API_KEY    = os.environ.get('DSA_DISCORD_API_KEY'   )
 
 SMTP_HOST = os.environ.get('DSA_SMTP_HOST')
 SMTP_PORT = 465
@@ -45,6 +46,27 @@ SPAM_TRIGGERS = [
     'please join our discord server', 'pay vetted tutors', 'do their homework', 'https://discord.gg/QN24TRp98D', '@everyone'        #homework scam
 ]
 
+WELCOME_MESSAGES = ["WOOOOOOOOOOO NEW MEMBER! Let's give it up for {user}!",
+                    "A new comrade walks among us, welcome {user}!"        ,
+                    "BEHOLD, OUR LATEST MEMBER! Welcome {user}!"           ,
+                    "NEW MEMBER ALERT, WELCOME TO THE TEAM {user}!"        ,
+                    "The movement grows - welcome {user}!"                 ,
+                    "{user} HAS ARRIVVED!!!!!"                             ,
+                    "THIS PLACE JUST GOT WAY COOLER, {user} IS HERE!"      ,
+                    "CAN IT BE? A NEW MEMBER? WELCOME {user}!!!"]
+
+WELCOME_GIFS = ["https://tenor.com/view/kermit-the-frog-meme-memes-gif-12941282736857313833"                                  ,
+                "https://tenor.com/view/cr1tikal-cr1tikal-screaming-cr1tikal-disappearing-screaming-disappearing-gif-23950917",
+                "https://tenor.com/view/letgo-lets-goooo-pickles-lets-go-excited-gif-13808708"                                ,
+                "https://tenor.com/view/moesha-hip-hop-moves-brandy-dancing-break-it-down-gif-5952634884787074202"            ,
+                "https://tenor.com/view/fire-gif-10341555270454130792"                                                        ,
+                "https://tenor.com/view/cats-cat-cat-meme-gif-12840712051420478510"                                           ,
+                "https://tenor.com/view/cat-furious-69-chaos-gif-2533929600664737789"                                         ,
+                "https://tenor.com/view/happy-dog-happy-excited-dog-excited-so-excited-gif-18315667279243423061"              ,
+                "https://tenor.com/view/seal-excited-seal-seal-wiggle-gif-15853330345039423938"                               ,
+                "https://tenor.com/view/kk-okay-confused-cat-pet-gif-5580628"                                                 ,
+                "https://tenor.com/view/le-sserafim-eunchae-kpop-hong-eunchae-heart-gif-11407649331784235985"]
+
 class REGEX:
     AI_CHECK  = re.compile(r"\bai\b" )
     ART_CHECK = re.compile(r"\bart\b")
@@ -76,6 +98,7 @@ class CATEGORIES(Discord_Object_Registry):
 
 class CHANNELS(Discord_Object_Registry):
     _object_type        = 'channel'
+    INTRODUCTIONS       = 1355257320501809222
     STEERING_COMMITTEE  = 1420193006857752607
     BOT_TESTING         = 1436468298635284520
     DSA_CHATTING        = 1355310818060926977
@@ -86,6 +109,7 @@ class CHANNELS(Discord_Object_Registry):
     CALENDAR            = 1355288280870027465
     PERSONAL_REQUESTS   = 1426780469005123614
     QUOTE_PERMITTED     = [1436468298635284520, 1355310818060926977, 1316127393735245845]
+    ABOUT               = 1308836338518196254
 
 class ROLES(Discord_Object_Registry):
     _object_type        = 'role'
@@ -93,6 +117,7 @@ class ROLES(Discord_Object_Registry):
     ADMIN               = 1428192973069484033
     MODERATOR           = 1341486417251008553
     DSA_MEMBER          = 1386954497623986186
+    DSA_CURIOUS         = 1308839613166522378
     COMRADE             = 1308834783601889311
     CURIOUS             = 1308839613166522378
     ADMIN_LIST          = [1428192973069484033, 1359004727886483486]
@@ -111,12 +136,15 @@ class MESSAGES(Discord_Object_Registry):
     _object_type        = 'message'
     COMMITTEE_SIGNUP    = (lambda: CHANNELS.COMMITTEE_SIGNUP, 1437584543983992892)
     ROLE_SIGNUP         = (lambda: CHANNELS.RULES_AND_ROLES , 1437584543983992892)
+    STEERING_TICKET     = (lambda: CHANNELS.ABOUT           , 1479185846811758704)
+    VERIFY_BUTTON       = (lambda: CHANNELS.BOT_TESTING     , 1494762177406435400)
 
 class EMOJIS(Discord_Object_Registry):
     _object_type        = 'emoji'
     CHAPTER_LOGO        = 1394907700529332234
     ROSA_AGGRO          = 1448448184262197443
     ROSA                = 1448437667485319271
+    ROSE                = 1478271266568798208
 
 REGISTRIES = [
     CATEGORIES,
@@ -126,6 +154,15 @@ REGISTRIES = [
     MESSAGES  ,
     EMOJIS
 ]
+
+class Branch:
+    def __init__(self, input_branch, client):
+        self.name = input_branch['name']
+        self.role = GUILD.get_role(input_branch['role'])
+
+BRANCHES = {
+    2027: {'name': 'Mendo Lake', 'role': 1491456804264218746}
+}
 
 # Takes a discord object registry and converts it from IDs to the actual objects themselves
 class Hydrator:
@@ -165,6 +202,8 @@ class Hydrator:
                 except Exception as error:
                     self.failures[name] = error
 
+
+
 class Committee:
     def __init__(self, name, emoji, role):
         self.name              = name
@@ -203,16 +242,16 @@ ZOHRAN_BAD_MEMES = [
 ]
 
 GULAG_MEMES = [
-    'https://tenor.com/view/cat-kitten-prisoner-cage-struggle-gif-26295980',
-    'https://tenor.com/view/violence-anime-smash-wall-hard-gif-4874411',
-    'https://tenor.com/view/cat-explode-cat-explosion-cat-explode-boom-gif-5774509256627282047',
+    'https://tenor.com/view/cat-kitten-prisoner-cage-struggle-gif-26295980'                                    ,
+    'https://tenor.com/view/violence-anime-smash-wall-hard-gif-4874411'                                        ,
+    'https://tenor.com/view/cat-explode-cat-explosion-cat-explode-boom-gif-5774509256627282047'                ,
     'https://tenor.com/view/yoshi-mario-yoshis-island-super-smash-brother-super-smash-brother-n64-gif-21681448',
-    'https://tenor.com/view/chicken-chicken-bro-destroy-boom-explosion-gif-14109606',
-    'https://tenor.com/view/cat-smash-punch-fast-fight-gif-15236044976681595844',
-    'https://tenor.com/view/spongebob-brick-hit-fish-toink-spongebob-gif-24552343',
-    'https://tenor.com/view/tom-and-jerry-fight-mouse-cat-hit-gif-17312376',
-    'https://tenor.com/view/punishment-angry-hit-gif-16703076',
-    'https://tenor.com/view/the-god-of-highschool-goh-anime-smackdown-hot-women-gif-17807232',
+    'https://tenor.com/view/chicken-chicken-bro-destroy-boom-explosion-gif-14109606'                           ,
+    'https://tenor.com/view/cat-smash-punch-fast-fight-gif-15236044976681595844'                               ,
+    'https://tenor.com/view/spongebob-brick-hit-fish-toink-spongebob-gif-24552343'                             ,
+    'https://tenor.com/view/tom-and-jerry-fight-mouse-cat-hit-gif-17312376'                                    ,
+    'https://tenor.com/view/punishment-angry-hit-gif-16703076'                                                 ,
+    'https://tenor.com/view/the-god-of-highschool-goh-anime-smackdown-hot-women-gif-17807232'                  ,
     'https://tenor.com/view/off-to-gulag-send-cat-gif-11181718824893681217'
 ]
 
@@ -231,15 +270,15 @@ SONOMA_CHRISTI_MEMES = [
 
 ENGELS_DISSENT_MEMES = [
     'https://tenor.com/view/ninja-rage-ninja-twitch-you-little-shit-the-fuck-you-say-the-fuck-you-said-gif-18318497',
-    'https://tenor.com/view/the-office-michael-scott-i-will-kill-you-kill-kill-you-gif-16432800',
-    'https://tenor.com/view/sniper-pubg-loading-sniper-reload-gif-15505006',
-    'https://tenor.com/view/shinobu-kocho-looking-menacing-gif-26555277',
-    'https://tenor.com/view/cocking-gun-cardi-b-press-song-ready-to-shoot-holding-a-gun-gif-23180773',
-    'https://tenor.com/view/kobeni-kobeni-knife-chainsaw-man-kobeni-csm-csm-kobeni-gif-27228850',
-    'https://tenor.com/view/knife-gif-13790649',
-    'https://tenor.com/view/the-office-death-threat-dwight-funny-gif-11758760',
-    'https://tenor.com/view/shoebill-shoebill-bird-bird-threat-him-gif-22043045',
-    'https://tenor.com/view/im-coming-for-you-joe-biden-i-will-beat-you-youre-mine-i-will-get-you-gif-18720429',
+    'https://tenor.com/view/the-office-michael-scott-i-will-kill-you-kill-kill-you-gif-16432800'                    ,
+    'https://tenor.com/view/sniper-pubg-loading-sniper-reload-gif-15505006'                                         ,
+    'https://tenor.com/view/shinobu-kocho-looking-menacing-gif-26555277'                                            ,
+    'https://tenor.com/view/cocking-gun-cardi-b-press-song-ready-to-shoot-holding-a-gun-gif-23180773'               ,
+    'https://tenor.com/view/kobeni-kobeni-knife-chainsaw-man-kobeni-csm-csm-kobeni-gif-27228850'                    ,
+    'https://tenor.com/view/knife-gif-13790649'                                                                     ,
+    'https://tenor.com/view/the-office-death-threat-dwight-funny-gif-11758760'                                      ,
+    'https://tenor.com/view/shoebill-shoebill-bird-bird-threat-him-gif-22043045'                                    ,
+    'https://tenor.com/view/im-coming-for-you-joe-biden-i-will-beat-you-youre-mine-i-will-get-you-gif-18720429'     ,
     'https://tenor.com/view/tomas-gif-23048735'
 ]
 
