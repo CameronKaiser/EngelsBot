@@ -211,6 +211,12 @@ class VerifyButton(discord.ui.View):
 
     @discord.ui.button(label="Verify membership & access the server!", style=discord.ButtonStyle.red, custom_id='verify_button_new')
     async def create(self, interaction: discord.Interaction, button: discord.ui.Button):
+        if ROLES.DSA_MEMBER in interaction.user.roles and not HelperMethods.is_admin(interaction.user.roles):
+            await interaction.response.send_message(
+                content   = f"You're all good - already verified!",
+                ephemeral = True)
+            return
+
         await interaction.response.send_modal(VerificationModal(interaction.user, interaction.client))
 
 class VerificationModal(discord.ui.Modal, title="Are you a DSA Member? Let's get you verified!"):
@@ -230,16 +236,16 @@ class VerificationModal(discord.ui.Modal, title="Are you a DSA Member? Let's get
     user_zipcode = discord.ui.TextInput(
         label       = "Please enter your zipcode",
         placeholder = '12345',
-        style        = discord.TextStyle.short,
-        required     = True,
-        max_length   = 5
+        style       = discord.TextStyle.short,
+        required    = True,
+        max_length  = 5
     )
 
     user_name = discord.ui.TextInput(
-        label       = "Please enter your preferred name",
-        style       = discord.TextStyle.short,
-        required    = True,
-        max_length  = 50
+        label      = "Please enter your preferred name",
+        style      = discord.TextStyle.short,
+        required   = True,
+        max_length = 50
     )
 
     async def on_submit(self, interaction: discord.Interaction):
@@ -294,11 +300,11 @@ class VerificationModal(discord.ui.Modal, title="Are you a DSA Member? Let's get
                     message += f" You now have access to all organization channels except those of committees - if you're interested in joining any, please see {CHANNELS.COMMITTEE_SIGNUP.mention}!"
 
                 await interaction.response.send_message(
-                    content=message,
-                    ephemeral=True)
+                    content   = message,
+                    ephemeral = True)
 
-                await CHANNELS.BOT_TESTING.send(random.choice(Configuration.WELCOME_MESSAGES).replace("{user}", user.mention))
-                await CHANNELS.BOT_TESTING.send(random.choice(Configuration.WELCOME_GIFS))
+                await CHANNELS.DSA_CHATTING.send(random.choice(Configuration.WELCOME_MESSAGES).replace("{user}", user.mention))
+                await CHANNELS.DSA_CHATTING.send(random.choice(Configuration.WELCOME_GIFS))
 
             except Exception as error:
                 await CHANNELS.BOT_TESTING.send(f'Unable to announce user verification - check your DSA_CHATTING id in Configuration ({error})')
@@ -313,9 +319,9 @@ class VerificationModal(discord.ui.Modal, title="Are you a DSA Member? Let's get
 
                 updated_user = await self.client.solidarity_api.update_user(solidarity_user.data['id'], payload)
 
-                date_joined = 'Unretrievable'
+                date_joined  = 'Unretrievable'
                 ydsa_chapter = 'None'
-                branch_name = 'None' if not branch else branch.name
+                branch_name  = 'None' if not branch else branch.name
                 if custom_properties:
                     if custom_properties.get('join-date'):
                         date_joined = custom_properties['join-date']
@@ -335,7 +341,7 @@ class VerificationModal(discord.ui.Modal, title="Are you a DSA Member? Let's get
                     color=MEMBERS.ENGELS_BOT.color
                 )
 
-                await CHANNELS.BOT_TESTING.send(embed=embed)
+                await CHANNELS.AUTO_MOD.send(embed=embed)
 
             except Exception as error:
                 await CHANNELS.BOT_TESTING.send(f"‼️ Failed to update {user.mention} in Solidarity Tech: {error}")
@@ -343,8 +349,8 @@ class VerificationModal(discord.ui.Modal, title="Are you a DSA Member? Let's get
         except Exception as error:
             await CHANNELS.BOT_TESTING.send(f'‼️ User {user.mention}s verification failed: {error}')
             await interaction.response.send_message(
-                content=f"We're sorry, an error occurred and we were unable to complete verification. A log has been sent to the admin team and we will try to fix this ASAP! In the meantime, feel free to verify manually by [opening a ticket with Steering Committee]({MESSAGES.STEERING_TICKET.jump_url}).",
-                ephemeral=True)
+                content   = f"We're sorry, an error occurred and we were unable to complete verification. A log has been sent to the admin team and we will try to fix this ASAP! In the meantime, feel free to verify manually by [opening a ticket with Steering Committee]({MESSAGES.STEERING_TICKET.jump_url}).",
+                ephemeral = True)
 
 
 

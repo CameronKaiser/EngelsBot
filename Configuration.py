@@ -137,7 +137,7 @@ class MESSAGES(Discord_Object_Registry):
     COMMITTEE_SIGNUP    = (lambda: CHANNELS.COMMITTEE_SIGNUP, 1437584543983992892)
     ROLE_SIGNUP         = (lambda: CHANNELS.RULES_AND_ROLES , 1437584543983992892)
     STEERING_TICKET     = (lambda: CHANNELS.ABOUT           , 1479185846811758704)
-    VERIFY_BUTTON       = (lambda: CHANNELS.BOT_TESTING     , 1494762177406435400)
+    VERIFY_BUTTON       = (lambda: CHANNELS.BOT_TESTING     , 1494792725302738945)
 
 class EMOJIS(Discord_Object_Registry):
     _object_type        = 'emoji'

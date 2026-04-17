@@ -83,20 +83,21 @@ async def random_thought(channel):
 #    ~ Webhooks ~
 # -------------------------------------------------------------------------------------------------------------------------------------------------------------
 
-# @client.event
-#async def on_member_join(member):
-#    embed = discord.Embed(
-#        title="DSA Member Verification",
-#        description=f"Verifying your DSA membership gives you access to a wealth of channels we use to organize! If you're a member (or once you become one), [click here to verify]({MESSAGES.VERIFY_BUTTON.jump_url})!",
-#        color=discord.Color.red()
-#    )
-#
-#    message = f"Hi {member.mention}, welcome to the {C.CHAPTER_NAME} DSA Discord server!\n\n \
-#                Please introduce yourself here!\n                                         \
-#                What are your name and pronouns? How did you hear about us? What got you interested in socialism? Are you a DSA member? Are you a member of any other organizations (Indivisible, WFP, etc)?\n\n \
-#                Then check out {CHANNELS.ABOUT.mention} to get acquainted with us and {CHANNELS.RULES_AND_ROLES.mention} to read our rules and select your roles!"
-#
-#    await CHANNELS.BOT_TESTING.send(content=message, embed=embed)
+@client.event
+async def on_member_join(member):
+    embed = discord.Embed(
+        title       = "DSA Member Verification",
+        description = f"Verifying your DSA membership gives you access to a wealth of channels we use to organize! If you're a member (or once you become one), [click here to verify]({MESSAGES.VERIFY_BUTTON.jump_url})!",
+        color       = discord.Color.red(),
+        url         = MESSAGES.VERIFY_BUTTON.jump_url
+    )
+
+    message = f"Hi {member.mention}, welcome to the {C.CHAPTER_NAME} DSA Discord server! {EMOJIS.ROSE if EMOJIS.ROSE else '🌹'}\n\n" \
+              f"Please introduce yourself here!\n" \
+              f"What are your name and pronouns? How did you hear about us? What got you interested in socialism? Are you a DSA member? Are you a member of any other organizations (Indivisible, WFP, etc)?\n\n" \
+              f"Then check out {CHANNELS.ABOUT.mention} to get acquainted with us and {CHANNELS.RULES_AND_ROLES.mention} to read our rules and select your roles!"
+
+    await CHANNELS.INTRODUCTIONS.send(content=message, embed=embed)
 
 @client.event
 async def on_message_delete(message):
