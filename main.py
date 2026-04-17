@@ -15,7 +15,6 @@ import discord.ext
 import Configuration as C
 import Airtable
 import HelperMethods
-import Objects
 import RecruitmentDrive
 import Ticket
 import Mutables
