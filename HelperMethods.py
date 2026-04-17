@@ -12,7 +12,7 @@ import Mutables
 import Configuration as C
 
 # Easy Access
-from Configuration import (ROLES, GUILD_ID, REGISTRIES, BRANCHES)
+from Configuration import (ROLES, GUILD_ID, REGISTRIES, BRANCHES, Branch)
 
 def is_admin(roles):
     for role in roles:
@@ -64,10 +64,10 @@ async def get_predefined_objects(client):
         print()
 
 async def get_branches(client):
-    for branch in Configuration.BRANCHES:
-        branch_data = Configuration.BRANCHES[branch]
+    for branch in BRANCHES:
+        branch_data = BRANCHES[branch]
         try:
-            Configuration.BRANCHES[branch] = Configuration.Branch(branch_data, client)
+            BRANCHES[branch] = Branch(branch_data, client)
 
             print(f"Branch {branch_data['name']} successfully retrieved.")
         except Exception as error:
