@@ -141,6 +141,9 @@ async def create_forum_digest(client, channel_to_post):
 
     for channel in C.GUILD.text_channels:
 
+        if channel.category not in C.CATEGORIES.ORGANIZATIONAL:
+            continue
+
         async for thread in channel.archived_threads(limit=None):
             if not thread.permissions_for(ROLES.DSA_MEMBER).read_messages:
                 continue
@@ -153,7 +156,7 @@ async def create_forum_digest(client, channel_to_post):
 
 
     for thread in C.GUILD.threads:
-        if not thread.permissions_for(ROLES.DSA_MEMBER).read_messages:
+        if not thread.permissions_for(ROLES.DSA_MEMBER).read_messages or thread.category not in C.CATEGORIES.ORGANIZATIONAL:
             continue
 
         messages = 0
