@@ -33,11 +33,17 @@ class GoogleApi:
             self.counter = 0
 
     async def _run(self, func, *args, **kwargs):
+        await self.arbitrate_rate()
+
         loop = asyncio.get_running_loop()
-        return await loop.run_in_executor(
+        response = await loop.run_in_executor(
             None,
             partial(func, *args, **kwargs)
         )
+
+        self.counter += 1
+
+        return response
 
     async def get_events(self):
 
@@ -48,13 +54,9 @@ class GoogleApi:
         page_token = None
         while not finished:
 
-            await self.arbitrate_rate()
-
-            request = self.api.calendarList().list(pageToken=page_token)
+            request  = self.api.calendarList().list(pageToken=page_token)
             response = await self._run(request.execute)
             print(f"CALENDAR LIST: {response}")
-
-            self.counter += 1
 
             for calendar in response.get("items"):
                 calendar_ids.append(calendar["id"])
@@ -74,8 +76,6 @@ class GoogleApi:
             page_token = None
             while not finished:
 
-                await self.arbitrate_rate()
-
                 request = self.api.events().list(
                     calendarId   = calendar_id,
                     timeMin      = now,
@@ -85,7 +85,6 @@ class GoogleApi:
                     pageToken    = page_token
                 )
                 response = await self._run(request.execute)
-                self.counter += 1
 
                 print(f"RETRIEVED EVENTS: {response}")
 
@@ -100,8 +99,6 @@ class GoogleApi:
         print(f'Cached {len(self.cached_events)} events from Google Calendar!')
 
     async def create_event(self, payload):
-
-        await self.arbitrate_rate()
 
         request = self.api.events().insert(
             calendarId = self.CALENDAR_ID,
