@@ -294,6 +294,13 @@ class VerificationModal(discord.ui.Modal, title="Are you a DSA Member? Let's get
                     ephemeral = True)
                 return
 
+            if not solidarity_user.data['custom_user_properties']['membership-status']:
+                await interaction.response.send_message(
+                    content=f"It looks like you're not a member yet! Membership starts with DSA National and then automatically connects to us here at Sonoma County DSA. Take a minute to [sign up right now](https://act.dsausa.org/donate/membership/?source=sonoma-county-discord)!\n\nIf you believe this to be an error, please open a ticket with the Steering Committee [here]({MESSAGES.STEERING_TICKET.jump_url})\n\nNote: If you signed up to be a member within the past 4 hours, please try again later - it can take some time for the profile to be finalized in our system!",
+                    ephemeral=True)
+                return
+
+
             if solidarity_user.data['custom_user_properties']['membership-status'][0]['value'] != 'AfVqfj0n':
                 await interaction.response.send_message(
                     content   = f"We've got you in our records, but it looks like your membership dues have expired. If you re-enable your membership with National, we can get you back in!",
