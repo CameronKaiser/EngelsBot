@@ -217,40 +217,65 @@ class VerifyButton(discord.ui.View):
                 ephemeral = True)
             return
 
-        await interaction.response.send_modal(VerificationModal(interaction.user, interaction.client))
+        if HelperMethods.is_admin(interaction.user.roles):
+            await interaction.response.send_message(
+                'Optional Admin Override: Select another member to verify on behalf of',
+                view      = SelectMember(interaction.user, interaction.client),
+                ephemeral = True)
+        else:
+            await interaction.response.send_modal(VerificationModal(interaction.user, interaction.client))
 
-class VerificationModal(discord.ui.Modal, title="Are you a DSA Member? Let's get you verified!"):
+class SelectMember(discord.ui.View):
     def __init__(self, user, client):
-        super().__init__()
+        super().__init__(timeout=60)
         self.user   = user
         self.client = client
 
+    @discord.ui.select(cls=discord.ui.UserSelect, placeholder="User you want to verify", min_values=0, max_values=1)
+    async def select_member(self, interaction, select):
+        member = select.values[0] if select.values else None
+        await interaction.response.send_modal(VerificationModal(interaction.user, interaction.client, member_override=member))
+
+    @discord.ui.button(label="Skip user override (verify myself)", style=discord.ButtonStyle.secondary)
+    async def skip(self, interaction, button):
+        await interaction.response.send_modal(VerificationModal(interaction.user, interaction.client))
+
+class VerificationModal(discord.ui.Modal, title="Are you a DSA Member? Let's get you verified!"):
+    def __init__(self, user, client, member_override=None):
+        super().__init__()
+        self.user            = user
+        self.client          = client
+        self.member_override = member_override
+
     user_email = discord.ui.TextInput(
-        label       = "Please enter your email",
-        placeholder = 'example@socodsa.org',
-        style       = discord.TextStyle.short,
-        required    = True,
-        max_length  = 200
+        label="Please enter your email",
+        placeholder='example@socodsa.org',
+        style=discord.TextStyle.short,
+        required=True,
+        max_length=200
     )
 
     user_zipcode = discord.ui.TextInput(
-        label       = "Please enter your zipcode",
-        placeholder = '12345',
-        style       = discord.TextStyle.short,
-        required    = True,
-        max_length  = 5
+        label="Please enter your zipcode",
+        placeholder='12345',
+        style=discord.TextStyle.short,
+        required=True,
+        max_length=5
     )
 
     user_name = discord.ui.TextInput(
-        label      = "Please enter your preferred name",
-        style      = discord.TextStyle.short,
-        required   = True,
-        max_length = 50
+        label="Please enter your preferred name",
+        style=discord.TextStyle.short,
+        required=True,
+        max_length=50
     )
 
     async def on_submit(self, interaction: discord.Interaction):
 
-        user = interaction.user
+        if self.member_override:
+            user = self.member_override
+        else:
+            user = interaction.user
 
         try:
 
