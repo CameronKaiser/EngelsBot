@@ -6,7 +6,7 @@ from pyairtable.formulas import AND, GTE, Field, match
 
 # Local Modules
 from   Configuration import (AIRTABLE_API_KEY, AIRTABLE_BASE_ID, AIRTABLE_MEMBERS_TABLE_ID, AIRTABLE_TICKETS_TABLE_ID, AIRTABLE_VARIABLES_TABLE_ID, AIRTABLE_QUOTES_TABLE_ID)
-from   Objects       import Quote
+from   Models        import Quote
 import Mutables
 
 api = Api(AIRTABLE_API_KEY)
