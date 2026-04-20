@@ -1,6 +1,7 @@
 import os
 import json
 import asyncio
+from datetime import datetime, timedelta
 from time import time
 
 import Configuration
@@ -11,14 +12,15 @@ from googleapiclient.discovery import build
 
 class GoogleApi:
     def __init__(self, credential):
-        credential_json = json.loads(credential)
-        self.credentials = Credentials.from_authorized_user_info(credential_json)
-        self.api          = build("calendar", "v3", credentials=self.credentials)
-        self.CALENDAR_ID  = Configuration.GOOGLE_CALENDAR_ID
-        self.RATE_LIMIT   = 10
-        self.WINDOW_LIMIT = 1
-        self.window_start = time()
-        self.counter      = 0
+        credential_json    = json.loads(credential)
+        self.credentials   = Credentials.from_authorized_user_info(credential_json)
+        self.api           = build("calendar", "v3", credentials=self.credentials)
+        self.CALENDAR_ID   = Configuration.GOOGLE_CALENDAR_ID
+        self.RATE_LIMIT    = 10
+        self.WINDOW_LIMIT  =  1
+        self.window_start  = time()
+        self.counter       =  0
+        self.cached_events = {}
 
     async def arbitrate_rate(self):
         if time() - self.window_start > self.WINDOW_LIMIT:
@@ -37,57 +39,109 @@ class GoogleApi:
             partial(func, *args, **kwargs)
         )
 
-    async def create_event(self, event):
+    async def get_events(self):
+
+        events = {}
+
+        calendar_ids = []
+        finished = False
+        page_token = None
+        while not finished:
+
+            await self.arbitrate_rate()
+
+            request = self.api.calendarList().list(pageToken=page_token)
+            response = await self._run(request.execute)
+            print(f"CALENDAR LIST: {response}")
+
+            self.counter += 1
+
+            for calendar in response.get("items"):
+                calendar_ids.append(calendar["id"])
+
+            page_token = response.get("nextPageToken")
+            if not page_token:
+                finished = True
+
+        now  = datetime.now().astimezone().isoformat()
+        then = (datetime.now() + timedelta(days=31)).astimezone().isoformat()
+
+        print(now)
+
+        for calendar_id in calendar_ids:
+
+            finished = False
+            page_token = None
+            while not finished:
+
+                await self.arbitrate_rate()
+
+                request = self.api.events().list(
+                    calendarId   = calendar_id,
+                    timeMin      = now,
+                    timeMax      = then,
+                    singleEvents = True,
+                    orderBy      = "startTime",
+                    pageToken    = page_token
+                )
+                response = await self._run(request.execute)
+                self.counter += 1
+
+                print(f"RETRIEVED EVENTS: {response}")
+
+                retrieved_events = response.get("items")
+                for retrieved_event in retrieved_events:
+                    events[retrieved_event['id']] = retrieved_event
+
+                page_token = response.get("nextPageToken")
+                if not page_token:
+                    finished = True
+
+        print(f'Cached {len(self.cached_events)} events from Google Calendar!')
+
+    async def create_event(self, payload):
 
         await self.arbitrate_rate()
-
-        payload = self.convert_solidarity_event(event)
 
         request = self.api.events().insert(
             calendarId = self.CALENDAR_ID,
             body       = payload
         )
 
-        print(payload)
-
-
-        self.counter += 1
+        print(f'payload: {payload}')
 
         return await self._run(request.execute)
 
     async def delete_event(self, calendar_id: str, event_id: str):
-        async with self.rate_limiter:
-            request = self.api.events().delete(
-                calendarId=calendar_id,
-                eventId=event_id
-            )
-            return await self._run(request.execute)
+        request = self.api.events().delete(
+            calendarId=calendar_id,
+            eventId=event_id)
+        return await self._run(request.execute)
 
     async def update_event(self, calendar_id: str, event_id: str, event_body: dict):
         async with self.rate_limiter:
             request = self.api.events().update(
-                calendarId=calendar_id,
+                calendarId =calendar_id,
                 eventId=event_id,
                 body=event_body
             )
             return await self._run(request.execute)
 
-    def convert_solidarity_event(self, event):
-        payload = {}
+    def generate_event_payloads(self):
 
-        event_sessions = event.get('event_sessions')
+        payloads = {}
 
-        if not event_sessions:
-            return None
+        for event_id in self.cached_events:
+            event = self.cached_events[event_id]
+            payload = {}
+            payload['id'         ] = event    [    'id'     ]
+            payload['summary'    ] = event.get('summary'    )
+            payload['description'] = event.get('description')
+            payload['start'      ] = event.get('start'      )
+            payload['end'        ] = event.get('end'        )
+            payload['location'   ] = event.get('location'   )
 
-        main_session = event_sessions[0]
+            payloads[event['id']] = payload
 
-        payload['summary']     = f"TEST - {event.get('title')}"
-        payload['description'] = event.get('description')
-        payload['start'  ]     = {'dateTime': main_session['start_time']}
-        payload['end'    ]     = {'dateTime': main_session['end_time'  ]}
-
-        payload['location'] = main_session.get('location_address')
-
-        return payload
+        return payloads
 

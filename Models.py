@@ -26,6 +26,16 @@ class SolidarityUser:
     def __init__(self, user):
         self.data = user
 
+class SolidarityEvent:
+
+    def __init__(self, event):
+        self.data = event
+
+class SolidarityEventSession:
+
+    def __init__(self, session):
+        self.data = session
+
 @dataclass
 class Quote:
 
