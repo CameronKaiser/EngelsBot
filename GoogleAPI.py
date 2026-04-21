@@ -10,6 +10,9 @@ from functools import partial
 from google.oauth2.credentials import Credentials
 from googleapiclient.discovery import build
 
+from Models import GoogleEvent
+
+
 class GoogleApi:
     def __init__(self, credential):
         credential_json    = json.loads(credential)
@@ -47,16 +50,13 @@ class GoogleApi:
 
     async def get_events(self):
 
-        events = {}
-
         calendar_ids = []
-        finished = False
-        page_token = None
+        finished     = False
+        page_token   = None
         while not finished:
 
             request  = self.api.calendarList().list(pageToken=page_token)
             response = await self._run(request.execute)
-            print(f"CALENDAR LIST: {response}")
 
             for calendar in response.get("items"):
                 calendar_ids.append(calendar["id"])
@@ -65,10 +65,8 @@ class GoogleApi:
             if not page_token:
                 finished = True
 
-        now  = datetime.now().astimezone().isoformat()
-        then = (datetime.now() + timedelta(days=31)).astimezone().isoformat()
-
-        print(now)
+        now  =  datetime.now().astimezone().isoformat()
+        then = (datetime.now() + timedelta(days=100)).astimezone().isoformat()
 
         for calendar_id in calendar_ids:
 
@@ -86,11 +84,9 @@ class GoogleApi:
                 )
                 response = await self._run(request.execute)
 
-                print(f"RETRIEVED EVENTS: {response}")
-
                 retrieved_events = response.get("items")
                 for retrieved_event in retrieved_events:
-                    events[retrieved_event['id']] = retrieved_event
+                    self.cached_events[retrieved_event['id']] = GoogleEvent(retrieved_event, calendar_id)
 
                 page_token = response.get("nextPageToken")
                 if not page_token:
@@ -105,40 +101,25 @@ class GoogleApi:
             body       = payload
         )
 
-        print(f'payload: {payload}')
+        return await self._run(request.execute)
+
+    async def update_event(self, payload):
+
+        request = self.api.events().patch(
+            calendarId = self.CALENDAR_ID,
+            eventId    = payload.get('id'),
+            body       = payload
+        )
 
         return await self._run(request.execute)
 
-    async def delete_event(self, calendar_id: str, event_id: str):
+    async def delete_event(self, event):
+
         request = self.api.events().delete(
-            calendarId=calendar_id,
-            eventId=event_id)
+            calendarId  =  event.calendar_id,
+            eventId     =  event.id,
+            sendUpdates = 'none'
+        )
+
         return await self._run(request.execute)
-
-    async def update_event(self, calendar_id: str, event_id: str, event_body: dict):
-        async with self.rate_limiter:
-            request = self.api.events().update(
-                calendarId =calendar_id,
-                eventId=event_id,
-                body=event_body
-            )
-            return await self._run(request.execute)
-
-    def generate_event_payloads(self):
-
-        payloads = {}
-
-        for event_id in self.cached_events:
-            event = self.cached_events[event_id]
-            payload = {}
-            payload['id'         ] = event    [    'id'     ]
-            payload['summary'    ] = event.get('summary'    )
-            payload['description'] = event.get('description')
-            payload['start'      ] = event.get('start'      )
-            payload['end'        ] = event.get('end'        )
-            payload['location'   ] = event.get('location'   )
-
-            payloads[event['id']] = payload
-
-        return payloads
 

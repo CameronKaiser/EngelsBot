@@ -1,6 +1,7 @@
 # Local Modules
-from typing import Any, Dict, Optional
-from dataclasses import dataclass
+from typing          import Any, Dict, Optional
+from dataclasses     import dataclass
+from dateutil.parser import isoparse
 
 # Easy Access
 from Configuration import ROLES
@@ -28,13 +29,65 @@ class SolidarityUser:
 
 class SolidarityEvent:
 
-    def __init__(self, event):
+    def __init__(self, event, session):
+        self.id   = str(session.get('id'))
         self.data = event
+        payload   = ({'id' : str(session.get('id'             )),
+                 'summary' :     session.get('title'           ),
+                'location' :     session.get('location_address'),
+             'description' :       event.get('description'     ),
+                   'start' : {'dateTime': session['start_time']},
+                     'end' : {'dateTime': session['end_time'  ]}})
 
-class SolidarityEventSession:
+        self.payload = SolidarityEvent.normalize(payload)
 
-    def __init__(self, session):
-        self.data = session
+    def __eq__(self, other):
+        if isinstance(other, GoogleEvent):
+            p1 = self .payload
+            p2 = other.payload
+
+            event_id = p1.get('id')
+
+            if p1.get(    'summary') != p2.get('summary'    ):
+                print(f"Event {event_id} differential: summary {p1.get('summary')} != {p2.get('summary')}")
+                return False
+            if p1.get(   'location') != p2.get('location'   ):
+                print(f"Event {event_id} differential: location {p1.get('location')} != {p2.get('location')}")
+                return False
+            if p1.get('description') != p2.get('description'):
+                print(f"Event {event_id} differential: description {p1.get('description')} != {p2.get('description')}")
+                return False
+            if isoparse(p1.get('start').get('dateTime')) != isoparse(p2.get('start').get('dateTime')):
+                print(f"Event {event_id} differential: start {isoparse(p1.get('start').get('dateTime'))} != {isoparse(p2.get('start').get('dateTime'))}")
+                return False
+            if isoparse(p1.get('end').get('dateTime')) != isoparse(p2.get('end').get('dateTime')):
+                print(f"Event {event_id} differential: end {isoparse(p1.get('end').get('dateTime'))} != {isoparse(p2.get('end').get('dateTime'))}")
+                return False
+
+            return True
+        return NotImplemented
+
+#   If Soltech has an empty string, convert to None for Google
+    @staticmethod
+    def normalize(payload):
+        for key in payload:
+            if payload [key] == '':
+                payload[key] =  None
+
+        return payload
+
+class GoogleEvent:
+
+    def __init__(self, event, calendar_id):
+        self.id          = event.get('id')
+        self.data        = event
+        self.calendar_id = calendar_id
+        self.payload     = {         'id' : event.get('id'         ),
+                                'summary' : event.get('summary'    ),
+                               'location' : event.get('location'   ),
+                            'description' : event.get('description'),
+                                  'start' : event.get('start'      ),
+                                    'end' : event.get('end'        )}
 
 @dataclass
 class Quote:

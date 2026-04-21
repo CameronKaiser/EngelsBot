@@ -27,6 +27,9 @@ from Configuration import (DISCORD_API_KEY, CATEGORIES, CHANNELS, ROLES, MEMBERS
 from Models        import Member, Quote, QuoteRequest
 import SolidarityAPI
 
+import warnings
+warnings.filterwarnings("ignore", category=FutureWarning)
+
 intents                 = discord.Intents.default()
 intents.message_content = True
 intents.members         = True
@@ -310,23 +313,36 @@ async def slash_command(interaction: discord.Interaction):
 
     await interaction.client.google_api    .get_events()
     await interaction.client.solidarity_api.get_events()
-    prospective_payloads = interaction.client.solidarity_api.generate_event_payloads()
-    existing_payloads    = interaction.client.google_api    .generate_event_payloads()
+
     engels_id = '15c2778ff1500632209a3609f5dea164325b8db50375c24ebea8e22e3ab8dca8@group.calendar.google.com'
 
-    updated = 0
-    added   = 0
+    updated  = 0
+    added    = 0
+    deleted  = 0
 
-    for prospective_payload_id in prospective_payloads:
-        prospective_payload = prospective_payloads[prospective_payload_id]
-        if prospective_payload_id in existing_payloads:
-            print(f"DIFFERENCE FOUND ON EVENT {prospective_payload_id}")
+    solidarity_events = interaction.client.solidarity_api.cached_events
+    google_events     = interaction.client.google_api    .cached_events
+
+    for solidarity_event_id, solidarity_event in solidarity_events.items():
+        if solidarity_event_id in google_events:
+            google_event = google_events[solidarity_event_id]
+            if not solidarity_event == google_event:
+                response = await interaction.client.google_api.update_event(solidarity_event.payload)
+                print(f"Event updated: {response}")
+                updated += 1
         else:
-            response = await interaction.client.google_api.create_event(prospective_payload)
+            response = await interaction.client.google_api.create_event(solidarity_event.payload)
             print(f"Event added: {response}")
             added += 1
 
-    await interaction.followup.send(f'Events synced! ({added} added, {updated} updated)')
+    for google_event_id, google_event in google_events.items():
+        if google_event_id not in solidarity_events:
+            print(f'Deleting google event {google_event_id} as it was not found in Solidarity Tech')
+            deleted += 1
+
+    diagnostics = f'Calendar events synced! ({added} added, {updated} updated, {deleted} deleted)'
+    print(diagnostics)
+    await interaction.followup.send(diagnostics)
 
 @tree.command(name="summon_forum_digest", description="Summons a forum digest ranking threads and forum posts", guild=discord.Object(id=GUILD_ID))
 async def slash_command(interaction: discord.Interaction):

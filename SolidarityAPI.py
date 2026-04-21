@@ -10,7 +10,7 @@ import discord
 
 import Configuration
 import HelperMethods
-from Models import (Endpoint, Response, SolidarityUser, SolidarityEvent, SolidarityEventSession)
+from   Models import (Endpoint, Response, SolidarityUser, SolidarityEvent)
 
 # Easy Access
 from Configuration import CHANNELS, MEMBERS, ROLES, MESSAGES, EMOJIS, BRANCHES
@@ -74,20 +74,19 @@ class SolidarityAPI:
 
     async def get_events(self):
 
-        print(f"EPOCH: {time()}")
         finished = False
         offset = 0
         while not finished:
             response = await self._execute_request(self.GET_EVENTS_ENDPOINT, query=f'?_limit=100&_offset={offset}&_since={int(time())}')
-            print(response)
+
             if response:
                 json = response.json
 
                 for event in json['data']:
-                    self.cached_events[event['id']] = SolidarityEvent(event)
-                    if event.get('event_sessions'):
-                        for session in event.get('event_sessions'):
-                            self.cached_event_sessions[session['id']] = SolidarityEventSession(session)
+                    description = event.get('description')
+                    for session in event.get('event_sessions'):
+                    #   Google uses string IDs - MUST convert SolTech's int to string
+                        self.cached_events[str(session['id'])] = SolidarityEvent(event, session)
 
                 offset += 100
 
@@ -175,28 +174,6 @@ class SolidarityAPI:
             return 'retry'
 
         return 'failure'
-
-    def generate_event_payloads(self):
-
-        payloads = {}
-
-        for event_id in self.cached_events:
-            event = self.cached_events[event_id].data
-            description = event.get('description')
-
-            event_sessions = event.get('event_sessions')
-            for event_session in event_sessions:
-                payload = {}
-                payload['id'         ] = event_session['id']
-                payload['summary'    ] = f"TEST - {event_session.get('title')}"
-                payload['description'] = description
-                payload['start'      ] = {'dateTime': event_session['start_time']}
-                payload['end'        ] = {'dateTime': event_session['end_time']}
-                payload['location'] = event_session.get('location_address')
-
-                payloads[event_session['id']] = payload
-
-        return payloads
 
     class RateLimiter:
 
