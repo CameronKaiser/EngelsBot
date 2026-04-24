@@ -288,7 +288,7 @@ class VerificationModal(discord.ui.Modal, title="Are you a DSA Member? Let's get
             if not solidarity_user:
                 solidarity_user = await self.client.solidarity_api.get_user(query=f'?email={input_email}')
 
-            if not solidarity_user or solidarity_user.data['address']['zip_code'][:5] != input_zipcode:
+            if not solidarity_user or (solidarity_user.data['address']['zip_code'] and solidarity_user.data['address']['zip_code'][:5] != input_zipcode):
                 await interaction.response.send_message(
                     content   = f"Sorry, we couldn't find a user matching email {input_email} and zipcode {input_zipcode} in our records. If you believe this to be an error, please open a ticket with the Steering Committee [here]({MESSAGES.STEERING_TICKET.jump_url})\n\nNote: If you signed up to be a member within the past 4 hours, please try again later - it can take some time for the profile to be finalized in our system!",
                     ephemeral = True)
@@ -296,7 +296,7 @@ class VerificationModal(discord.ui.Modal, title="Are you a DSA Member? Let's get
 
             if not solidarity_user.data['custom_user_properties']['membership-status']:
                 await interaction.response.send_message(
-                    content=f"It looks like you're not a member yet! Membership starts with DSA National and then automatically connects to us here at Sonoma County DSA. Take a minute to [sign up right now](https://act.dsausa.org/donate/membership/?source=sonoma-county-discord)!\n\nIf you believe this to be an error, please open a ticket with the Steering Committee [here]({MESSAGES.STEERING_TICKET.jump_url})\n\nNote: If you signed up to be a member within the past 4 hours, please try again later - it can take some time for the profile to be finalized in our system!",
+                    content=f"It looks like you're not a member yet! Membership starts with DSA National and then automatically connects to us here at Sonoma County DSA. Take a minute to [sign up right now](https://act.dsausa.org/donate/membership/?source=sonoma-county-discord)!\n\nIf you believe this to be an error, please open a ticket with the Steering Committee [here]({MESSAGES.STEERING_TICKET.jump_url})\n\nNote: If you signed up to be a member within the past 4 hours, please try again later - it can take some time for the profile to be finalized in our system! Additionally, if you signed up with a dues waiver, it may take up to a week to register in our system.",
                     ephemeral=True)
                 return
 
