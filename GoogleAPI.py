@@ -59,14 +59,15 @@ class GoogleApi:
             response = await self._run(request.execute)
 
             for calendar in response.get("items"):
-                calendar_ids.append(calendar["id"])
+                if calendar["id"] == Configuration.GOOGLE_CALENDAR_ID:  # Currently only operates on Engels' personal calendar
+                    calendar_ids.append(calendar["id"])
 
             page_token = response.get("nextPageToken")
             if not page_token:
                 finished = True
 
-        now  =  datetime.now().astimezone().isoformat()
-        then = (datetime.now() + timedelta(days=100)).astimezone().isoformat()
+        now  =  datetime.now().                       astimezone().isoformat()
+        then = (datetime.now() + timedelta(days=180)).astimezone().isoformat()
 
         for calendar_id in calendar_ids:
 

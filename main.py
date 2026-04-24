@@ -324,6 +324,10 @@ async def slash_command(interaction: discord.Interaction):
     google_events     = interaction.client.google_api    .cached_events
 
     for solidarity_event_id, solidarity_event in solidarity_events.items():
+    #   Ignore virtual event pairings - duplicate calendar events will appear if we do not
+        if solidarity_event.virtual_pair:
+            continue
+
         if solidarity_event_id in google_events:
             google_event = google_events[solidarity_event_id]
             if not solidarity_event == google_event:
@@ -336,8 +340,9 @@ async def slash_command(interaction: discord.Interaction):
             added += 1
 
     for google_event_id, google_event in google_events.items():
-        if google_event_id not in solidarity_events:
-            print(f'Deleting google event {google_event_id} as it was not found in Solidarity Tech')
+        if google_event_id not in solidarity_events and google_event.calendar_id == C.GOOGLE_CALENDAR_ID:
+            response = await interaction.client.google_api.delete_event(google_event)
+            print(f"Deleted google event {google_event_id} from Engels' Calendar as it was not found in Solidarity Tech: {response}")
             deleted += 1
 
     diagnostics = f'Calendar events synced! ({added} added, {updated} updated, {deleted} deleted)'

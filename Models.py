@@ -3,6 +3,7 @@ from typing          import Any, Dict, Optional
 from dataclasses     import dataclass
 from dateutil.parser import isoparse
 
+import Configuration
 # Easy Access
 from Configuration import ROLES
 
@@ -30,16 +31,21 @@ class SolidarityUser:
 class SolidarityEvent:
 
     def __init__(self, event, session):
+
+        description = SolidarityEvent.build_description(event, session)
+        summary     = SolidarityEvent.build_summary    (event, session)
+
         self.id   = str(session.get('id'))
         self.data = event
         payload   = ({'id' : str(session.get('id'             )),
-                 'summary' :     session.get('title'           ),
+                 'summary' :                  summary           ,
                 'location' :     session.get('location_address'),
-             'description' :       event.get('description'     ),
+             'description' :                  description       ,
                    'start' : {'dateTime': session['start_time']},
                      'end' : {'dateTime': session['end_time'  ]}})
 
-        self.payload = SolidarityEvent.normalize(payload)
+        self.payload      = SolidarityEvent.normalize(payload)
+        self.virtual_pair = True if session.get('paired_meci_id') and str(session.get('event_type')) == 'virtual' else False
 
     def __eq__(self, other):
         if isinstance(other, GoogleEvent):
@@ -75,6 +81,53 @@ class SolidarityEvent:
                 payload[key] =  None
 
         return payload
+
+    @staticmethod
+    def build_description(event, session):
+        description = None
+        if event.get('description'):
+            description = event.get('description')
+
+        if session.get('note'):
+            if description:
+                description += f"\n\n{session.get('note')}"
+            else:
+                description = session.get('note')
+
+        return description
+
+#   This method adds X number of invisible spaces to the title, where X corresponds with the tag ordering set in Configuration.
+#   If you embed your google calendar on your website, you can then use javascript to check how many invisible spaces (alt + 0173)
+#   are present in the title and then color code the object based on that
+    @staticmethod
+    def build_summary(event, session):
+        summary = session.get('title') if session.get('title') else event.get('title')
+
+        tags = event.get('tags')
+    #   Normalize tags
+        tags = [tag.replace('_', '').lower() for tag in tags]
+
+        i = 1
+
+        for tag in Configuration.EVENT_TAGS:
+            if tag in tags:
+                summary += ('­' * i)
+                break
+
+            i += 1
+
+
+        print(f'Summary: {summary}')
+
+        return summary
+
+
+
+
+
+
+
+
 
 class GoogleEvent:
 
