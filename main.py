@@ -11,6 +11,7 @@ import numpy as np
 import discord
 import discord.ext
 
+import Configuration
 # Local Modules
 import Configuration as C
 import Airtable
@@ -20,10 +21,14 @@ import Ticket
 import Mutables
 
 # Easy Access
+from GoogleAPI import GoogleApi
 from HelperMethods import is_admin
 from Configuration import (DISCORD_API_KEY, CATEGORIES, CHANNELS, ROLES, MEMBERS, MESSAGES, EMOJIS, GUILD_ID, REGEX)
 from Models        import Member, Quote, QuoteRequest
 import SolidarityAPI
+
+import warnings
+warnings.filterwarnings("ignore", category=FutureWarning)
 
 intents                 = discord.Intents.default()
 intents.message_content = True
@@ -59,6 +64,9 @@ async def on_ready():
         client.loop.create_task(random_thought(CHANNELS.DSA_CHATTING))
 
     await CHANNELS.BOT_TESTING.send("Engels Online")
+
+    client.google_api = GoogleApi(C.GOOGLE_CREDENTIAL_JSON)
+    print('Google API initialized')
 
     await client.solidarity_api.get_users()
 
@@ -294,6 +302,53 @@ async def slash_command(interaction: discord.Interaction):
 
     await tree.sync(guild=discord.Object(id=GUILD_ID))
     await interaction.response.send_message('Commands Synced!') # type: ignore
+
+@tree.command(name="sync_events", description="Syncs all events from Solidarity Tech to Google Calendar", guild=discord.Object(id=GUILD_ID))
+async def slash_command(interaction: discord.Interaction):
+    if not is_admin(interaction.user.roles):
+        await interaction.response.send_message('sorry boss, admin only') # type: ignore
+        return
+
+    await interaction.response.defer()  # type: ignore
+
+    await interaction.client.google_api    .get_events()
+    await interaction.client.solidarity_api.get_events()
+
+    engels_id = '15c2778ff1500632209a3609f5dea164325b8db50375c24ebea8e22e3ab8dca8@group.calendar.google.com'
+
+    updated  = 0
+    added    = 0
+    deleted  = 0
+
+    solidarity_events = interaction.client.solidarity_api.cached_events
+    google_events     = interaction.client.google_api    .cached_events
+
+    for solidarity_event_id, solidarity_event in solidarity_events.items():
+    #   Ignore virtual event pairings - duplicate calendar events will appear if we do not
+    #   Ignore private events
+        if solidarity_event.virtual_pair or 'private' in solidarity_event.data.get('tags'):
+            continue
+
+        if solidarity_event_id in google_events:
+            google_event = google_events[solidarity_event_id]
+            if not solidarity_event == google_event:
+                response = await interaction.client.google_api.update_event(solidarity_event.payload)
+                print(f"Event updated: {response}")
+                updated += 1
+        else:
+            response = await interaction.client.google_api.create_event(solidarity_event.payload)
+            print(f"Event added: {response}")
+            added += 1
+
+    for google_event_id, google_event in google_events.items():
+        if google_event_id not in solidarity_events and google_event.calendar_id == C.GOOGLE_CALENDAR_ID:
+            response = await interaction.client.google_api.delete_event(google_event)
+            print(f"Deleted google event {google_event_id} from Engels' Calendar as it was not found in Solidarity Tech: {response}")
+            deleted += 1
+
+    diagnostics = f'Calendar events synced! ({added} added, {updated} updated, {deleted} deleted)'
+    print(diagnostics)
+    await interaction.followup.send(diagnostics)
 
 @tree.command(name="summon_forum_digest", description="Summons a forum digest ranking threads and forum posts", guild=discord.Object(id=GUILD_ID))
 async def slash_command(interaction: discord.Interaction):

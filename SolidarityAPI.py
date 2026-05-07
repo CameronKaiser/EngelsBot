@@ -10,7 +10,7 @@ import discord
 
 import Configuration
 import HelperMethods
-from   Models import (Endpoint, Response, SolidarityUser)
+from   Models import (Endpoint, Response, SolidarityUser, SolidarityEvent)
 
 # Easy Access
 from Configuration import CHANNELS, MEMBERS, ROLES, MESSAGES, EMOJIS, BRANCHES
@@ -21,12 +21,15 @@ class SolidarityAPI:
 
     GET_USERS_ENDPOINT   = Endpoint('https://api.solidarity.tech/v1/users' , 'GET')
     UPDATE_USER_ENDPOINT = Endpoint('https://api.solidarity.tech/v1/users/', 'PUT')
+    GET_EVENTS_ENDPOINT  = Endpoint('https://api.solidarity.tech/v1/events', 'GET')
 
     def __init__(self, token):
-        self.token        = token
-        self.rate_limiter = self.RateLimiter()
-        self.session      = aiohttp.ClientSession()
-        self.cached_users = {}
+        self.token                 = token
+        self.rate_limiter          = self.RateLimiter()
+        self.session               = aiohttp.ClientSession()
+        self.cached_users          = {}
+        self.cached_events         = {}
+        self.cached_event_sessions = {}
 
 #   actual endpoint stuff
 
@@ -68,6 +71,34 @@ class SolidarityAPI:
         response = await self._execute_request(self.UPDATE_USER_ENDPOINT, query=user_id, payload=payload)
 
         return response
+
+    async def get_events(self):
+
+        self.cached_events = {}
+
+        finished = False
+        offset = 0
+        while not finished:
+            response = await self._execute_request(self.GET_EVENTS_ENDPOINT, query=f'?_limit=100&_offset={offset}&_since={int(time())}')
+
+            if response:
+                json = response.json
+
+                for event in json['data']:
+                    description = event.get('description')
+                    for session in event.get('event_sessions'):
+                    #   Google uses string IDs - MUST convert SolTech's int to string
+                        self.cached_events[str(session['id'])] = SolidarityEvent(event, session)
+
+                offset += 100
+
+                if offset + 100 >= json['meta']['total_count']:
+                    finished = True
+
+            else:
+                finished = True
+
+        print(f'Cached {len(self.cached_events)} events from Solidarity Tech!')
 
     async def _execute_request(self, endpoint, query='', payload=None):
 
@@ -188,6 +219,7 @@ class SolidarityAPI:
                 if self.throttle_event:
                     self.throttle_event = None
                     self._reset_window()
+
 
 
 

@@ -10,9 +10,10 @@ ROOT_FOLDER     = os.path.dirname(os.path.abspath(__file__))
 IMAGE_FILE_PATH = f'{ROOT_FOLDER}/images/'
 FILES_FILE_PATH = f'{ROOT_FOLDER}/files/'
 
-SOLIDARITY_API_KEY = os.environ.get('DSA_SOLIDARITY_API_KEY')
-AIRTABLE_API_KEY   = os.environ.get('DSA_AIRTABLE_API_KEY'  )
-DISCORD_API_KEY    = os.environ.get('DSA_DISCORD_API_KEY'   )
+AIRTABLE_API_KEY       = os.environ.get('DSA_AIRTABLE_API_KEY'      )
+DISCORD_API_KEY        = os.environ.get('DSA_DISCORD_API_KEY'       )
+GOOGLE_CREDENTIAL_JSON = os.environ.get('DSA_GOOGLE_CREDENTIAL_JSON')
+SOLIDARITY_API_KEY     = os.environ.get('DSA_SOLIDARITY_API_KEY')
 
 SMTP_HOST = os.environ.get('DSA_SMTP_HOST')
 SMTP_PORT = 465
@@ -29,6 +30,13 @@ AIRTABLE_TICKETS_TABLE_ID   = 'tblywbUcY7V0yRoUI'
 AIRTABLE_QUOTES_TABLE_ID    = 'tblasWZwOwKku5IJB'
 AIRTABLE_VARIABLES_TABLE_ID = 'tbl3rwQ7zKPZmCU6E'
 
+GOOGLE_CALENDAR_ID          = '15c2778ff1500632209a3609f5dea164325b8db50375c24ebea8e22e3ab8dca8@group.calendar.google.com'
+# the color coder ignores case and underscores when analyzing tags, so dsaBusiness or dsa_business are fine to use in SolTech if listed as dsabusiness here
+EVENT_TAGS = [
+    'chapterbusiness',
+    'alliedevent',
+    'bookclub'
+]
 RECRUITMENT_DRIVE_URL = 'https://falldrive.dsausa.org/api/referrals'
 SQUARE_STREAM_URL     = 'https://www.youtube.com/watch?v=KES0RUIXg8s'
 
