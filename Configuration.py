@@ -256,6 +256,12 @@ GULAG_MEMES = [
     'https://tenor.com/view/off-to-gulag-send-cat-gif-11181718824893681217'
 ]
 
+SLEEPY_MEMES = [
+    'https://tenor.com/view/sleepy-gif-15260198',
+    'https://tenor.com/view/sleeping-dog-dog-sleep-sleep-dog-dawg-gif-5199517836740041846',
+    'https://tenor.com/view/asleep-fall-asleep-patrick-snore-snoring-gif-9090768458930644907'
+]
+
 SONOMA_GEORGIA_MEMES = [
     f'{IMAGE_FILE_PATH}sonoma-georgia-meme-1.jpg' ,
     f'{IMAGE_FILE_PATH}sonoma-georgia-meme-2.gif' ,

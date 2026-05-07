@@ -770,6 +770,9 @@ async def on_message(message):
         asyncio.create_task(HelperMethods.start_cooldown())
         await message.channel.send('https://tenor.com/view/ah-shit-here-we-go-again-ah-shit-cj-gta-gta-san-andreas-gif-13933485')
 
+    if 'read theory' in text:
+        await message.channel.send(random.choice(C.SLEEPY_MEMES))
+
     if text == 'stalinism':
         await message.add_reaction('👻')
 
