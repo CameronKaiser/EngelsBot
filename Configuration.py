@@ -34,7 +34,8 @@ GOOGLE_CALENDAR_ID          = '15c2778ff1500632209a3609f5dea164325b8db50375c24eb
 # the color coder ignores case and underscores when analyzing tags, so dsaBusiness or dsa_business are fine to use in SolTech if listed as dsabusiness here
 EVENT_TAGS = [
     'chapterbusiness',
-    'alliedevent'
+    'alliedevent',
+    'bookclub'
 ]
 RECRUITMENT_DRIVE_URL = 'https://falldrive.dsausa.org/api/referrals'
 SQUARE_STREAM_URL     = 'https://www.youtube.com/watch?v=KES0RUIXg8s'

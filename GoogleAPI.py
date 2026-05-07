@@ -50,6 +50,8 @@ class GoogleApi:
 
     async def get_events(self):
 
+        self.cached_events = {}
+
         calendar_ids = []
         finished     = False
         page_token   = None
@@ -81,7 +83,8 @@ class GoogleApi:
                     timeMax      = then,
                     singleEvents = True,
                     orderBy      = "startTime",
-                    pageToken    = page_token
+                    pageToken    = page_token,
+                    showDeleted  = True
                 )
                 response = await self._run(request.execute)
 

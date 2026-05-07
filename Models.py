@@ -42,7 +42,8 @@ class SolidarityEvent:
                 'location' :     session.get('location_address'),
              'description' :                  description       ,
                    'start' : {'dateTime': session['start_time']},
-                     'end' : {'dateTime': session['end_time'  ]}})
+                     'end' : {'dateTime': session['end_time'  ]},
+                  'status' : 'confirmed'                       })
 
         self.payload      = SolidarityEvent.normalize(payload)
         self.virtual_pair = True if session.get('paired_meci_id') and str(session.get('event_type')) == 'virtual' else False
@@ -54,6 +55,9 @@ class SolidarityEvent:
 
             event_id = p1.get('id')
 
+            if p1.get(    'status') != p2.get('status'    ):
+                print(f"Event {event_id} differential: status {p1.get('status')} != {p2.get('status')}")
+                return False
             if p1.get(    'summary') != p2.get('summary'    ):
                 print(f"Event {event_id} differential: summary {p1.get('summary')} != {p2.get('summary')}")
                 return False
@@ -105,7 +109,7 @@ class SolidarityEvent:
 
         tags = event.get('tags')
     #   Normalize tags
-        tags = [tag.replace('_', '').lower() for tag in tags]
+        tags = [tag.replace('_', '').replace('-', '').lower() for tag in tags]
 
         i = 1
 
@@ -121,14 +125,6 @@ class SolidarityEvent:
 
         return summary
 
-
-
-
-
-
-
-
-
 class GoogleEvent:
 
     def __init__(self, event, calendar_id):
@@ -140,7 +136,8 @@ class GoogleEvent:
                                'location' : event.get('location'   ),
                             'description' : event.get('description'),
                                   'start' : event.get('start'      ),
-                                    'end' : event.get('end'        )}
+                                    'end' : event.get('end'        ),
+                                 'status' : event.get('status'     )}
 
 @dataclass
 class Quote:

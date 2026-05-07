@@ -74,6 +74,8 @@ class SolidarityAPI:
 
     async def get_events(self):
 
+        self.cached_events = {}
+
         finished = False
         offset = 0
         while not finished:
