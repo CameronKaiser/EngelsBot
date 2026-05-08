@@ -24,15 +24,16 @@ GUILD: Optional[Guild] = None # Will be hydrated upon connection
 GUILD_ID               = 1308831013237035018
 CHAPTER_NAME           = 'Sonoma County'
 
-AIRTABLE_BASE_ID            = 'appU8994pqzpcf6eK'
-AIRTABLE_MEMBERS_TABLE_ID   = 'tbleGngzySQapiSUY'
-AIRTABLE_TICKETS_TABLE_ID   = 'tblywbUcY7V0yRoUI'
-AIRTABLE_QUOTES_TABLE_ID    = 'tblasWZwOwKku5IJB'
-AIRTABLE_VARIABLES_TABLE_ID = 'tbl3rwQ7zKPZmCU6E'
+AIRTABLE_BASE_ID                = 'appU8994pqzpcf6eK'
+AIRTABLE_MEMBERS_TABLE_ID       = 'tbleGngzySQapiSUY'
+AIRTABLE_TICKETS_TABLE_ID       = 'tblywbUcY7V0yRoUI'
+AIRTABLE_QUOTES_TABLE_ID        = 'tblasWZwOwKku5IJB'
+AIRTABLE_VARIABLES_TABLE_ID     = 'tbl3rwQ7zKPZmCU6E'
+AIRTABLE_CONFIGURATION_TABLE_ID = 'tblEIo6vAkQqacE2t'
 
 GOOGLE_CALENDAR_ID          = '15c2778ff1500632209a3609f5dea164325b8db50375c24ebea8e22e3ab8dca8@group.calendar.google.com'
 # the color coder ignores case and underscores when analyzing tags, so dsaBusiness or dsa_business are fine to use in SolTech if listed as dsabusiness here
-EVENT_TAGS = [
+DEFAULT_EVENT_TAGS = [
     'chapterbusiness',
     'alliedevent',
     'bookclub'

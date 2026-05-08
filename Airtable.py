@@ -5,7 +5,8 @@ from   pyairtable import Api
 from pyairtable.formulas import AND, GTE, Field, match
 
 # Local Modules
-from   Configuration import (AIRTABLE_API_KEY, AIRTABLE_BASE_ID, AIRTABLE_MEMBERS_TABLE_ID, AIRTABLE_TICKETS_TABLE_ID, AIRTABLE_VARIABLES_TABLE_ID, AIRTABLE_QUOTES_TABLE_ID)
+from Configuration import (AIRTABLE_API_KEY, AIRTABLE_BASE_ID, AIRTABLE_MEMBERS_TABLE_ID, AIRTABLE_TICKETS_TABLE_ID, AIRTABLE_VARIABLES_TABLE_ID,
+                           AIRTABLE_QUOTES_TABLE_ID, AIRTABLE_CONFIGURATION_TABLE_ID)
 from   Models        import Quote
 import Mutables
 
@@ -105,3 +106,16 @@ def delete_quote(quote):
 
     except Exception as error:
         return {'error': error}
+
+async def get_calendar_tags():
+
+    try:
+        configuration_table = api.table(AIRTABLE_BASE_ID, AIRTABLE_CONFIGURATION_TABLE_ID)
+
+        configuration_record = configuration_table.first(formula=match({"Key": "Tags"}))
+
+        return configuration_record['fields']['Array Value']
+
+    except Exception as error:
+        print(f'Failed to retrieve tags: {error}')
+        return None

@@ -4,6 +4,7 @@ from dataclasses     import dataclass
 from dateutil.parser import isoparse
 
 import Configuration
+import Mutables
 # Easy Access
 from Configuration import ROLES
 
@@ -113,7 +114,7 @@ class SolidarityEvent:
 
         i = 1
 
-        for tag in Configuration.EVENT_TAGS:
+        for tag in Mutables.calendar_tags:
             if tag in tags:
                 summary += ('­' * i)
                 break

@@ -303,6 +303,20 @@ async def slash_command(interaction: discord.Interaction):
     await tree.sync(guild=discord.Object(id=GUILD_ID))
     await interaction.response.send_message('Commands Synced!') # type: ignore
 
+@tree.command(name="sync_calendar_tags", description="Sync calendar tags to Engels. Note: You still need to update the javascript on events page", guild=discord.Object(id=GUILD_ID))
+async def slash_command(interaction: discord.Interaction):
+    if not is_admin(interaction.user.roles):
+        await interaction.response.send_message('sorry boss, admin only') # type: ignore
+        return
+
+    tags = await Airtable.get_calendar_tags()
+    if tags:
+        Mutables.calendar_tags = tags
+        await interaction.response.send_message(f'Tags Synced: {tags}')  # type: ignore
+    else:
+        await interaction.response.send_message('No tags found. Consider checking your Airtable Configuration.')  # type: ignore
+
+
 @tree.command(name="sync_events", description="Syncs all events from Solidarity Tech to Google Calendar", guild=discord.Object(id=GUILD_ID))
 async def slash_command(interaction: discord.Interaction):
     if not is_admin(interaction.user.roles):
