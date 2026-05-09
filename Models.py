@@ -99,6 +99,12 @@ class SolidarityEvent:
             else:
                 description = session.get('note')
 
+        if event.get('event_page_url'):
+            if description:
+                description += f"\n\nRSVP: {event.get('event_page_url')}"
+            else:
+                description = f"RSVP: {event.get('event_page_url')}"
+
         return description
 
 #   This method adds X number of invisible spaces to the title, where X corresponds with the tag ordering set in Configuration.
