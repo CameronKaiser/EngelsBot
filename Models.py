@@ -108,7 +108,7 @@ class SolidarityEvent:
     def build_summary(event, session):
         summary = session.get('title') if session.get('title') else event.get('title')
 
-        tags = event.get('tags')
+        tags = event.get('tags') + event.get('campaign_tags')
     #   Normalize tags
         tags = [tag.replace('_', '').replace('-', '').lower() for tag in tags]
 
@@ -132,6 +132,7 @@ class GoogleEvent:
         self.id          = event.get('id')
         self.data        = event
         self.calendar_id = calendar_id
+        self.status      = event.get('status')
         self.payload     = {         'id' : event.get('id'         ),
                                 'summary' : event.get('summary'    ),
                                'location' : event.get('location'   ),

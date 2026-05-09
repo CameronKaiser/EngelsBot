@@ -65,6 +65,11 @@ async def on_ready():
 
     await CHANNELS.BOT_TESTING.send("Engels Online")
 
+    tags = await Airtable.get_calendar_tags()
+    if tags:
+        Mutables.calendar_tags = tags
+        print(f'Tags Synced: {tags}')
+
     client.google_api = GoogleApi(C.GOOGLE_CREDENTIAL_JSON)
     print('Google API initialized')
 
@@ -355,7 +360,7 @@ async def slash_command(interaction: discord.Interaction):
             added += 1
 
     for google_event_id, google_event in google_events.items():
-        if google_event_id not in solidarity_events and google_event.calendar_id == C.GOOGLE_CALENDAR_ID:
+        if google_event_id not in solidarity_events and google_event.calendar_id == C.GOOGLE_CALENDAR_ID and google_event.status != 'cancelled':
             response = await interaction.client.google_api.delete_event(google_event)
             print(f"Deleted google event {google_event_id} from Engels' Calendar as it was not found in Solidarity Tech: {response}")
             deleted += 1
