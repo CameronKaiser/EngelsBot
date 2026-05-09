@@ -106,7 +106,7 @@ class SolidarityEvent:
 #   are present in the title and then color code the object based on that
     @staticmethod
     def build_summary(event, session):
-        summary = session.get('title') if session.get('title') else event.get('title')
+        summary = f"{event.get('title')} - {session.get('title')}" if session.get('title') else event.get('title')
 
         tags = event.get('tags') + event.get('campaign_tags')
     #   Normalize tags
