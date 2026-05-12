@@ -33,18 +33,21 @@ class SolidarityEvent:
 
     def __init__(self, event, session):
 
-        description = SolidarityEvent.build_description(event, session)
-        summary     = SolidarityEvent.build_summary    (event, session)
-
         self.id   = str(session.get('id'))
         self.data = event
+        self.tags = [tag.replace('_', '').replace('-', '').lower() for tag in event.get('tags') + event.get('campaign_tags')]
+        self.private = True if 'private' in self.tags else False
+
+        description = SolidarityEvent.build_description(event, session)
+        summary     = SolidarityEvent.build_summary    (self, event, session)
+
         payload   = ({'id' : str(session.get('id'             )),
                  'summary' :                  summary           ,
                 'location' :     session.get('location_address'),
              'description' :                  description       ,
                    'start' : {'dateTime': session['start_time']},
                      'end' : {'dateTime': session['end_time'  ]},
-                  'status' : 'confirmed'                       })
+                  'status' : 'confirmed' if not self.private else 'cancelled'})
 
         self.payload      = SolidarityEvent.normalize(payload)
         self.virtual_pair = True if session.get('paired_meci_id') and str(session.get('event_type')) == 'virtual' else False
@@ -110,25 +113,18 @@ class SolidarityEvent:
 #   This method adds X number of invisible spaces to the title, where X corresponds with the tag ordering set in Configuration.
 #   If you embed your google calendar on your website, you can then use javascript to check how many invisible spaces (alt + 0173)
 #   are present in the title and then color code the object based on that
-    @staticmethod
-    def build_summary(event, session):
-        summary = f"{event.get('title')} - {session.get('title')}" if session.get('title') else event.get('title')
 
-        tags = event.get('tags') + event.get('campaign_tags')
-    #   Normalize tags
-        tags = [tag.replace('_', '').replace('-', '').lower() for tag in tags]
+    def build_summary(self, event, session):
+
+        summary = f"{event.get('title')} - {session.get('title')}" if session.get('title') != event.get('title') else event.get('title')
 
         i = 1
-
         for tag in Mutables.calendar_tags:
-            if tag in tags:
+            if tag in self.tags:
                 summary += ('­' * i)
                 break
 
             i += 1
-
-
-        print(f'Summary: {summary}')
 
         return summary
 

@@ -73,6 +73,50 @@ async def get_branches(client):
         except Exception as error:
             print(f"Could not retrieve branch {branch_data['name']} - {error}")
 
+async def update_events(client):
+    try:
+        await client.google_api    .get_events()
+        await client.solidarity_api.get_events()
+    except Exception as error:
+        return f"Encountered error during event retrieval - deferring action so as to preserve calendar: {error}"
+
+    engels_id = '15c2778ff1500632209a3609f5dea164325b8db50375c24ebea8e22e3ab8dca8@group.calendar.google.com'
+
+    updated  = 0
+    added    = 0
+    deleted  = 0
+
+    solidarity_events = client.solidarity_api.cached_events
+    google_events     = client.google_api    .cached_events
+
+    for solidarity_event_id, solidarity_event in solidarity_events.items():
+    #   Ignore virtual event pairings - duplicate calendar events will appear if we do not
+    #   Ignore private events
+        if solidarity_event.virtual_pair or 'private' in solidarity_event.data.get('tags'):
+            continue
+
+        if solidarity_event_id in google_events:
+            google_event = google_events[solidarity_event_id]
+            if not solidarity_event == google_event:
+                response = await client.google_api.update_event(solidarity_event.payload)
+                print(f"Event updated: {response}")
+                updated += 1
+        else:
+            print(solidarity_event.payload)
+            response = await client.google_api.create_event(solidarity_event.payload)
+            print(f"Event added: {response}")
+            added += 1
+
+    for google_event_id, google_event in google_events.items():
+        if google_event_id not in solidarity_events and google_event.calendar_id == C.GOOGLE_CALENDAR_ID and google_event.status != 'cancelled':
+            response = await client.google_api.delete_event(google_event)
+            print(f"Deleted google event {google_event_id} from Engels' Calendar as it was not found in Solidarity Tech: {response}")
+            deleted += 1
+
+    diagnostics = f'Calendar events synced! ({added} added, {updated} updated, {deleted} deleted)'
+    print(diagnostics)
+    return diagnostics
+
 def grab_square_image():
     url = C.SQUARE_STREAM_URL  # Replace with actual ID
     streams = streamlink.streams(url)

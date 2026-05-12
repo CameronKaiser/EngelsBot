@@ -3,7 +3,7 @@ import asyncio
 import random
 import aiohttp
 import urllib.parse
-from   datetime import date
+from datetime import date, timedelta, datetime
 from   time     import time
 
 import discord
@@ -74,12 +74,14 @@ class SolidarityAPI:
 
     async def get_events(self):
 
-        self.cached_events = {}
+        temporary_events = {}
+
+        starting_time = int((datetime.now() - timedelta(days=64)).timestamp())
 
         finished = False
         offset = 0
         while not finished:
-            response = await self._execute_request(self.GET_EVENTS_ENDPOINT, query=f'?_limit=100&_offset={offset}&_since={int(time())}')
+            response = await self._execute_request(self.GET_EVENTS_ENDPOINT, query=f'?_limit=100&_offset={offset}&_since={starting_time}')
 
             if response:
                 json = response.json
@@ -88,7 +90,7 @@ class SolidarityAPI:
                     description = event.get('description')
                     for session in event.get('event_sessions'):
                     #   Google uses string IDs - MUST convert SolTech's int to string
-                        self.cached_events[str(session['id'])] = SolidarityEvent(event, session)
+                        temporary_events[str(session['id'])] = SolidarityEvent(event, session)
 
                 offset += 100
 
@@ -98,6 +100,7 @@ class SolidarityAPI:
             else:
                 finished = True
 
+        self.cached_events = temporary_events
         print(f'Cached {len(self.cached_events)} events from Solidarity Tech!')
 
     async def _execute_request(self, endpoint, query='', payload=None):

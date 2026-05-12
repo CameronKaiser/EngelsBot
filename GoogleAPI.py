@@ -50,7 +50,7 @@ class GoogleApi:
 
     async def get_events(self):
 
-        self.cached_events = {}
+        temporary_events = {}
 
         calendar_ids = []
         finished     = False
@@ -68,8 +68,8 @@ class GoogleApi:
             if not page_token:
                 finished = True
 
-        now  =  datetime.now().                       astimezone().isoformat()
-        then = (datetime.now() + timedelta(days=180)).astimezone().isoformat()
+        now  = (datetime.now() - timedelta(days= 64)).astimezone().isoformat()
+        then = (datetime.now() + timedelta(days=185)).astimezone().isoformat()
 
         for calendar_id in calendar_ids:
 
@@ -90,12 +90,13 @@ class GoogleApi:
 
                 retrieved_events = response.get("items")
                 for retrieved_event in retrieved_events:
-                    self.cached_events[retrieved_event['id']] = GoogleEvent(retrieved_event, calendar_id)
+                    temporary_events[retrieved_event['id']] = GoogleEvent(retrieved_event, calendar_id)
 
                 page_token = response.get("nextPageToken")
                 if not page_token:
                     finished = True
 
+        self.cached_events = temporary_events
         print(f'Cached {len(self.cached_events)} events from Google Calendar!')
 
     async def create_event(self, payload):

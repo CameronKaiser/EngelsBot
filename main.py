@@ -79,6 +79,7 @@ async def on_ready():
         scheduler.start()
         scheduler.add_job(HelperMethods.create_forum_digest, CronTrigger(day_of_week='sun', hour=9), args=[client, CHANNELS.DSA_BUSINESS])
         scheduler.add_job(client.solidarity_api.get_users  , CronTrigger(hour='0,5-23'            )                                      )
+        scheduler.add_job(HelperMethods.update_events      , CronTrigger(hour='0,5-23'            ), args=[client]                       )
 
 # -------------------------------------------------------------------------------------------------------------------------------------------------------------
 #    ~ Cron Jobs ~
@@ -330,43 +331,8 @@ async def slash_command(interaction: discord.Interaction):
 
     await interaction.response.defer()  # type: ignore
 
-    await interaction.client.google_api    .get_events()
-    await interaction.client.solidarity_api.get_events()
+    diagnostics = await HelperMethods.update_events(client)
 
-    engels_id = '15c2778ff1500632209a3609f5dea164325b8db50375c24ebea8e22e3ab8dca8@group.calendar.google.com'
-
-    updated  = 0
-    added    = 0
-    deleted  = 0
-
-    solidarity_events = interaction.client.solidarity_api.cached_events
-    google_events     = interaction.client.google_api    .cached_events
-
-    for solidarity_event_id, solidarity_event in solidarity_events.items():
-    #   Ignore virtual event pairings - duplicate calendar events will appear if we do not
-    #   Ignore private events
-        if solidarity_event.virtual_pair or 'private' in solidarity_event.data.get('tags'):
-            continue
-
-        if solidarity_event_id in google_events:
-            google_event = google_events[solidarity_event_id]
-            if not solidarity_event == google_event:
-                response = await interaction.client.google_api.update_event(solidarity_event.payload)
-                print(f"Event updated: {response}")
-                updated += 1
-        else:
-            response = await interaction.client.google_api.create_event(solidarity_event.payload)
-            print(f"Event added: {response}")
-            added += 1
-
-    for google_event_id, google_event in google_events.items():
-        if google_event_id not in solidarity_events and google_event.calendar_id == C.GOOGLE_CALENDAR_ID and google_event.status != 'cancelled':
-            response = await interaction.client.google_api.delete_event(google_event)
-            print(f"Deleted google event {google_event_id} from Engels' Calendar as it was not found in Solidarity Tech: {response}")
-            deleted += 1
-
-    diagnostics = f'Calendar events synced! ({added} added, {updated} updated, {deleted} deleted)'
-    print(diagnostics)
     await interaction.followup.send(diagnostics)
 
 @tree.command(name="summon_forum_digest", description="Summons a forum digest ranking threads and forum posts", guild=discord.Object(id=GUILD_ID))
