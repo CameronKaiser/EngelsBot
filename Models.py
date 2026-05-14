@@ -33,10 +33,11 @@ class SolidarityEvent:
 
     def __init__(self, event, session):
 
-        self.id   = str(session.get('id'))
-        self.data = event
-        self.tags = [tag.replace('_', '').replace('-', '').lower() for tag in event.get('tags') + event.get('campaign_tags')]
-        self.private = True if 'private' in self.tags else False
+        self.id           = str(session.get('id'))
+        self.data         = event
+        self.tags         = [tag.replace('_', '').replace('-', '').lower() for tag in event.get('tags') + event.get('campaign_tags')]
+        self.private      = True if 'private' in self.tags else False
+        self.virtual_pair = True if session.get('paired_meci_id') and str(session.get('event_type')) == 'virtual' else False
 
         description = SolidarityEvent.build_description(event, session)
         summary     = SolidarityEvent.build_summary    (self, event, session)
@@ -47,10 +48,10 @@ class SolidarityEvent:
              'description' :                  description       ,
                    'start' : {'dateTime': session['start_time']},
                      'end' : {'dateTime': session['end_time'  ]},
-                  'status' : 'confirmed' if not self.private else 'cancelled'})
+                  'status' : 'confirmed' if not (self.private or self.virtual_pair) else 'cancelled'})
 
         self.payload      = SolidarityEvent.normalize(payload)
-        self.virtual_pair = True if session.get('paired_meci_id') and str(session.get('event_type')) == 'virtual' else False
+
 
     def __eq__(self, other):
         if isinstance(other, GoogleEvent):
