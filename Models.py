@@ -35,7 +35,7 @@ class SolidarityEvent:
 
         self.id           = str(session.get('id'))
         self.data         = event
-        self.tags         = [tag.replace('_', '').replace('-', '').lower() for tag in event.get('tags') + event.get('campaign_tags')]
+        self.tags         = [tag.replace('_', '').replace('-', '').lower() for tag in event.get('tags') + event.get('campaign_tags') + session.get('tags')]
         self.private      = True if 'private' in self.tags else False
         self.virtual_pair = True if session.get('paired_meci_id') and str(session.get('event_type')) == 'virtual' else False
 
