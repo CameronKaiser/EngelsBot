@@ -70,6 +70,11 @@ async def on_ready():
         Mutables.calendar_tags = tags
         print(f'Tags Synced: {tags}')
 
+    banned_scope_ids = await Airtable.get_banned_scope_ids()
+    if banned_scope_ids:
+        Mutables.banned_scope_ids = [int(scope_id) for scope_id in banned_scope_ids]
+        print(f'Banned scope IDs Synced: {banned_scope_ids}')
+
     client.google_api = GoogleApi(C.GOOGLE_CREDENTIAL_JSON)
     print('Google API initialized')
 

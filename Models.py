@@ -7,6 +7,7 @@ import Configuration
 import Mutables
 # Easy Access
 from Configuration import ROLES
+from Mutables      import banned_scope_ids
 
 @dataclass
 class Endpoint:
@@ -36,6 +37,7 @@ class SolidarityEvent:
         self.id           = str(session.get('id'))
         self.data         = event
         self.tags         = [tag.replace('_', '').replace('-', '').lower() for tag in event.get('tags') + event.get('campaign_tags') + session.get('tags')]
+        self.scope_id     = event.get('scope_id')
         self.private      = True if 'private' in self.tags else False
         self.virtual_pair = True if session.get('paired_meci_id') and str(session.get('event_type')) == 'virtual' else False
 
@@ -48,7 +50,7 @@ class SolidarityEvent:
              'description' :                  description       ,
                    'start' : {'dateTime': session['start_time']},
                      'end' : {'dateTime': session['end_time'  ]},
-                  'status' : 'confirmed' if not (self.private or self.virtual_pair) else 'cancelled'})
+                  'status' : 'confirmed' if not (self.private or self.virtual_pair or self.scope_id in banned_scope_ids) else 'cancelled'})
 
         self.payload      = SolidarityEvent.normalize(payload)
 

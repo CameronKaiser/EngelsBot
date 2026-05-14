@@ -119,3 +119,16 @@ async def get_calendar_tags():
     except Exception as error:
         print(f'Failed to retrieve tags: {error}')
         return None
+
+async def get_banned_scope_ids():
+
+    try:
+        configuration_table = api.table(AIRTABLE_BASE_ID, AIRTABLE_CONFIGURATION_TABLE_ID)
+
+        configuration_record = configuration_table.first(formula=match({"Key": "Banned Scope IDs"}))
+
+        return configuration_record['fields']['Array Value']
+
+    except Exception as error:
+        print(f'Failed to retrieve tags: {error}')
+        return None

@@ -38,6 +38,13 @@ DEFAULT_EVENT_TAGS = [
     'alliedevent',
     'bookclub'
 ]
+
+#   Our soltech is scoped within national, who has higher scope. Therefore, they can create events at their own scope that show up for us. This is a list
+#   of scope ids to be ignored in event processing
+DEFAULT_BANNED_SCOPE_IDS = [
+    272
+]
+
 RECRUITMENT_DRIVE_URL = 'https://falldrive.dsausa.org/api/referrals'
 SQUARE_STREAM_URL     = 'https://www.youtube.com/watch?v=KES0RUIXg8s'
 
