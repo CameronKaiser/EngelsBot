@@ -90,10 +90,6 @@ async def update_events(client):
     google_events     = client.google_api    .cached_events
 
     for solidarity_event_id, solidarity_event in solidarity_events.items():
-    #   Ignore virtual event pairings - duplicate calendar events will appear if we do not
-    #   Ignore private events
-        if solidarity_event.virtual_pair or 'private' in solidarity_event.data.get('tags'):
-            continue
 
         if solidarity_event_id in google_events:
             google_event = google_events[solidarity_event_id]
