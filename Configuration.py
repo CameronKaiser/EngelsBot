@@ -84,8 +84,9 @@ WELCOME_GIFS = ["https://tenor.com/view/kermit-the-frog-meme-memes-gif-129412827
                 "https://tenor.com/view/le-sserafim-eunchae-kpop-hong-eunchae-heart-gif-11407649331784235985"]
 
 class REGEX:
-    AI_CHECK  = re.compile(r"\bai\b" )
-    ART_CHECK = re.compile(r"\bart\b")
+    AI_CHECK        = re.compile(r"\bai\b" )
+    ART_CHECK       = re.compile(r"\bart\b")
+    SIX_SEVEN_CHECK = re.compile(r"\b67\b")
 
 # Holds a list of discord object IDs that are converted to their respective objects upon connection to the guild
 class Discord_Object_Registry:
