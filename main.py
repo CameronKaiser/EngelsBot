@@ -79,6 +79,7 @@ async def on_ready():
     print('Google API initialized')
 
     await client.solidarity_api.get_users()
+    await client.solidarity_api.get_events()
 
     if not scheduler.running:
         scheduler.start()
@@ -339,6 +340,73 @@ async def slash_command(interaction: discord.Interaction):
     diagnostics = await HelperMethods.update_events(client)
 
     await interaction.followup.send(diagnostics)
+
+async def event_autocomplete(interaction: discord.Interaction, entry: str):
+    data    = interaction.data
+
+    events = interaction.client.solidarity_api.quickdraw_events.keys() if data['name'] == 'ping_event_attendees' else interaction.client.solidarity_api.quickdraw_vague_events.keys()
+
+    matches = [event for event in events if entry.lower() in event.lower()]
+    matches = matches[:10]
+
+    return [
+        discord.app_commands.Choice(name=event, value=event) for event in matches
+    ]
+
+@tree.command(name="ping_event_attendees", description="Makes Engels ping all attendees of an event session (if username is in soltech)", guild=discord.Object(id=GUILD_ID))
+@discord.app_commands.autocomplete(event=event_autocomplete)
+async def slash_command(interaction: discord.Interaction, event: str):
+    if not is_admin(interaction.user.roles):
+        await interaction.response.send_message('sorry boss, admin only') # type: ignore
+        return
+
+    event = interaction.client.solidarity_api.quickdraw_events[event]
+
+    rsvp_list = await interaction.client.solidarity_api.get_event_rsvp_list(event.id)
+
+    discord_users = []
+    unable_to_tag = []
+    for user in rsvp_list:
+        user_details = user['user_details']
+        discord_user = None
+        if user_details.get('custom_user_properties') and     user_details['custom_user_properties'].get('discord-handle'):
+            discord_user = interaction.guild.get_member_named(user_details['custom_user_properties']    ['discord-handle'])
+        if discord_user:
+            discord_users.append(discord_user.mention)
+        else:
+            unable_to_tag.append(f"{user_details.get('first_name')} {user_details.get('last_name')}")
+
+
+    await interaction.channel.send(f"{event.dated_title} RSVPs: {', '.join(discord_users)}")
+
+    if unable_to_tag:
+        await interaction.response.send_message(
+            content   = f"Unable to tag the following comrades: {', '.join(unable_to_tag)}",
+            ephemeral = True)
+    else:
+        return
+
+@tree.command(name="delete_event_lineup", description="Deletes all event session under the selected name", guild=discord.Object(id=GUILD_ID))
+@discord.app_commands.autocomplete(event_name=event_autocomplete)
+async def slash_command(interaction: discord.Interaction, event_name: str):
+    if not is_admin(interaction.user.roles):
+        await interaction.response.send_message('sorry boss, admin only') # type: ignore
+        return
+
+    deleted_events  = []
+    failed_deletion = []
+    for event_id in interaction.client.solidarity_api.cached_events:
+        event = interaction.client.solidarity_api.cached_events[event_id]
+
+        if event.vague_title == event_name:
+            response = await interaction.client.solidarity_api.delete_event_session(event_id)
+            if response and response.ok:
+                deleted_events .append(event_id)
+            else:
+                failed_deletion.append(event_id)
+
+    failure_clause = "" if not failed_deletion else f"\nFailed to delete the following event sessions: {', '.join(failed_deletion)}"
+    await interaction.response.send_message(f"Successfully deleted the following event sessions: {', '.join(deleted_events)}{failure_clause}\nIf you want them off the calendar, you still need to sync.")
 
 @tree.command(name="summon_forum_digest", description="Summons a forum digest ranking threads and forum posts", guild=discord.Object(id=GUILD_ID))
 async def slash_command(interaction: discord.Interaction):

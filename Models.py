@@ -1,4 +1,5 @@
 # Local Modules
+from datetime import datetime
 from typing          import Any, Dict, Optional
 from dataclasses     import dataclass
 from dateutil.parser import isoparse
@@ -43,6 +44,9 @@ class SolidarityEvent:
 
         description = SolidarityEvent.build_description(event, session)
         summary     = SolidarityEvent.build_summary    (self, event, session)
+
+        self.vague_title = summary
+        self.dated_title = f"{summary} - {datetime.fromisoformat(session['start_time']).strftime('%m/%d/%y')}"
 
         payload   = ({'id' : str(session.get('id'             )),
                  'summary' :                  summary           ,

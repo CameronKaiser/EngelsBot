@@ -19,17 +19,20 @@ class SolidarityAPI:
 
     RETRY_ATTEMPTS = 3
 
-    GET_USERS_ENDPOINT   = Endpoint('https://api.solidarity.tech/v1/users' , 'GET')
-    UPDATE_USER_ENDPOINT = Endpoint('https://api.solidarity.tech/v1/users/', 'PUT')
-    GET_EVENTS_ENDPOINT  = Endpoint('https://api.solidarity.tech/v1/events', 'GET')
+    GET_USERS_ENDPOINT            = Endpoint('https://api.solidarity.tech/v1/users'      , 'GET'   )
+    UPDATE_USER_ENDPOINT          = Endpoint('https://api.solidarity.tech/v1/users/'     , 'PUT'   )
+    GET_EVENTS_ENDPOINT           = Endpoint('https://api.solidarity.tech/v1/events'     , 'GET'   )
+    GET_EVENT_RSVP_LIST_ENDPOINT  = Endpoint('https://api.solidarity.tech/v1/event_rsvps', 'GET'   )
+    DELETE_EVENT_SESSION_ENDPOINT = Endpoint('https://api.solidarity.tech/v1/event_sessions/'    , 'DELETE')
 
     def __init__(self, token):
-        self.token                 = token
-        self.rate_limiter          = self.RateLimiter()
-        self.session               = aiohttp.ClientSession()
-        self.cached_users          = {}
-        self.cached_events         = {}
-        self.cached_event_sessions = {}
+        self.token                  = token
+        self.rate_limiter           = self.RateLimiter()
+        self.session                = aiohttp.ClientSession()
+        self.cached_users           = {}
+        self.cached_events          = {}
+        self.quickdraw_events       = {}
+        self.quickdraw_vague_events = {}
 
 #   actual endpoint stuff
 
@@ -74,7 +77,9 @@ class SolidarityAPI:
 
     async def get_events(self):
 
-        temporary_events = {}
+        events                 = {}
+        quickdraw_events       = {}
+        quickdraw_vague_events = {}
 
         starting_time = int((datetime.now() - timedelta(days=64)).timestamp())
 
@@ -90,7 +95,10 @@ class SolidarityAPI:
                     description = event.get('description')
                     for session in event.get('event_sessions'):
                     #   Google uses string IDs - MUST convert SolTech's int to string
-                        temporary_events[str(session['id'])] = SolidarityEvent(event, session)
+                        event_session = SolidarityEvent(event, session)
+                        events[str(session['id'])] = event_session
+                        quickdraw_events      [event_session.dated_title] = event_session
+                        quickdraw_vague_events[event_session.vague_title] = event_session
 
                 offset += 100
 
@@ -100,8 +108,40 @@ class SolidarityAPI:
             else:
                 finished = True
 
-        self.cached_events = temporary_events
+        self.cached_events    = events
+        self.quickdraw_events = quickdraw_events
+        self.quickdraw_vague_events = quickdraw_vague_events
         print(f'Cached {len(self.cached_events)} events from Solidarity Tech!')
+
+    async def get_event_rsvp_list(self, event_id):
+
+        attendees = []
+
+        finished = False
+        offset = 0
+        while not finished:
+            response = await self._execute_request(self.GET_EVENT_RSVP_LIST_ENDPOINT, query=f'?session_id={event_id}&full_user_payload=true&_limit=100')
+
+            if response:
+                json = response.json
+
+                for user in json['data']:
+                    attendees.append(user)
+
+                offset += 100
+
+                if offset + 100 >= json['meta']['total_count']:
+                    finished = True
+
+            else:
+                finished = True
+
+        return attendees
+
+    async def delete_event_session(self, session_id):
+        response = await self._execute_request(self.DELETE_EVENT_SESSION_ENDPOINT, query=session_id)
+
+        return response
 
     async def _execute_request(self, endpoint, query='', payload=None):
 
