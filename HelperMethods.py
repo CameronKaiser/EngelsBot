@@ -1,6 +1,9 @@
 # Standard Library
 import asyncio
 import datetime
+from email.utils import parsedate_to_datetime
+from zoneinfo import ZoneInfo
+
 import requests
 import zipfile
 import io
@@ -9,6 +12,7 @@ import csv
 # Third Party
 import cv2
 import streamlink
+from playwright.async_api import async_playwright
 
 import Configuration
 # Local Module
@@ -67,6 +71,45 @@ async def get_predefined_objects(client):
 
         print()
 
+async def get_sonoma_election_link():
+    async with async_playwright() as p:
+        browser = await p.chromium.launch(headless=True, args=["--disable-blink-features=AutomationControlled",])
+
+        context = await browser.new_context(
+            user_agent = (
+                "Mozilla/5.0 (Windows NT 10.0; Win64; x64) "
+                "AppleWebKit/537.36 (KHTML, like Gecko) "
+                "Chrome/124.0.0.0 Safari/537.36"
+            ),
+            locale     = "en-US",
+            viewport   = {"width": 1920, "height": 1080},
+        )
+
+        # Remove navigator.webdriver = true
+        await context.add_init_script("""
+                    Object.defineProperty(navigator, 'webdriver', {
+                        get: () => undefined
+                    });
+                """)
+
+        # Fake Chrome-specific properties
+        await context.add_init_script("""
+                    Object.defineProperty(navigator, 'platform', {
+                        get: () => 'Win32'
+                    });
+                """)
+
+        page = await context.new_page()
+
+        await page.goto("https://results.enr.clarityelections.com/CA/Sonoma/126199/web.345435/#/summary", wait_until="networkidle")
+
+        await page.wait_for_selector(f"[aria-label='Download Summary CSV']")
+        element = await page   .query_selector(f"[aria-label='Download Summary CSV']")
+        link    = await element.get_attribute ("href")
+
+        await browser.close()
+        return link
+
 async def get_election_results():
     joanna_results = [['Candidate', 'Votes', 'Percentage']]
     bagby_results  = [['Candidate', 'Votes', 'Percentage']]
@@ -78,7 +121,13 @@ async def get_election_results():
         "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 "
                       "(KHTML, like Gecko) Chrome/124.0 Safari/537.36"
     }
-    response = requests.get("https://results.enr.clarityelections.com//CA/Sonoma/126199/374141/reports/summary.zip", headers=headers)
+
+    link     = await get_sonoma_election_link()
+    response = requests.get(link, headers=headers)
+
+    gmt_time       = parsedate_to_datetime(response.headers.get("Last-Modified"))
+    local_time     = gmt_time.astimezone(ZoneInfo("America/Los_Angeles"))
+    formatted_time = local_time.strftime("%B %d, %Y, %I:%M %p").replace(" 0", " ").replace("AM", "a.m.").replace("PM", "p.m.")
 
     with zipfile.ZipFile(io.BytesIO(response.content)) as zipped:
         file_name = zipped.namelist()[0]
@@ -111,9 +160,9 @@ async def get_election_results():
     return f'# 📈 Live Election Results\n' \
            f"## Governor Race ({payload.get('ReportingTime')})\n" \
            f'{tableize(steyer_results)}\n' \
-           f'## District 2 Race\n'          \
+           f'## District 2 Race ({formatted_time})\n'          \
            f'{tableize(joanna_results)}\n'   \
-           f'## District 4 Race\n'            \
+           f'## District 4 Race ({formatted_time})\n'            \
            f'{tableize(bagby_results)}'
 
 async def get_branches(client):
