@@ -91,7 +91,7 @@ async def check_election():
         new_local_results = "# 🚨 NEW SONOMA COUNTY RESULTS!\n"
 
     if new_governor_results or new_local_results:
-        Configuration.CHANNELS.DSA_CHATTING.send(f"{new_governor_results}{new_local_results}{message}")
+        await  Configuration.CHANNELS.DSA_CHATTING.send(f"{new_governor_results}{new_local_results}{message}")
 
 async def get_sonoma_election_link():
     async with async_playwright() as p:
