@@ -71,6 +71,28 @@ async def get_predefined_objects(client):
 
         print()
 
+async def check_election():
+    if Mutables.governor_election_last_modified is None or Mutables.local_election_last_modified is None:
+        await get_election_results()
+        return
+
+    previous_local_time    = Mutables.local_election_last_modified
+    previous_governor_time = Mutables.governor_election_last_modified
+
+    message = await get_election_results()
+
+    new_governor_results = ""
+    new_local_results    = ""
+
+    if Mutables.governor_election_last_modified != previous_governor_time:
+        new_governor_results = "# 🚨 NEW GOVERNOR RESULTS!\n"
+
+    if Mutables.local_election_last_modified != previous_local_time:
+        new_local_results = "# 🚨 NEW SONOMA COUNTY RESULTS!\n"
+
+    if new_governor_results or new_local_results:
+        Configuration.CHANNELS.DSA_CHATTING.send(f"{new_governor_results}{new_local_results}{message}")
+
 async def get_sonoma_election_link():
     async with async_playwright() as p:
         browser = await p.chromium.launch(headless=True, args=["--disable-blink-features=AutomationControlled",])
@@ -129,6 +151,8 @@ async def get_election_results():
     local_time     = gmt_time.astimezone(ZoneInfo("America/Los_Angeles"))
     formatted_time = local_time.strftime("%B %d, %Y, %I:%M %p").replace(" 0", " ").replace("AM", "a.m.").replace("PM", "p.m.")
 
+    Mutables.local_election_last_modified = formatted_time
+
     with zipfile.ZipFile(io.BytesIO(response.content)) as zipped:
         file_name = zipped.namelist()[0]
 
@@ -150,6 +174,8 @@ async def get_election_results():
     response = requests.get("https://api.sos.ca.gov/returns/governor", headers=headers)
 
     payload = response.json()
+
+    Mutables.governor_election_last_modified = payload.get('ReportingTime')
 
     candidates = payload.get('candidates')
     for candidate in candidates:

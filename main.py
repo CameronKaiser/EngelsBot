@@ -86,6 +86,7 @@ async def on_ready():
         scheduler.add_job(HelperMethods.create_forum_digest, CronTrigger(day_of_week='sun', hour=9), args=[client, CHANNELS.DSA_BUSINESS])
         scheduler.add_job(client.solidarity_api.get_users  , CronTrigger(hour='0,5-23'            )                                      )
         scheduler.add_job(HelperMethods.update_events      , CronTrigger(hour='0,5-23'            ), args=[client]                       )
+        scheduler.add_job(HelperMethods.check_election     , CronTrigger(minute="*/5"             ),                                     )
 
 # -------------------------------------------------------------------------------------------------------------------------------------------------------------
 #    ~ Cron Jobs ~
