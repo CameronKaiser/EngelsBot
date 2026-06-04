@@ -72,7 +72,7 @@ async def get_election_results():
     bagby_results  = [['Candidate', 'Votes', 'Percentage']]
     steyer_results = [['Candidate', 'Votes', 'Percentage']]
 
-    valid_governors = ['TOM STEYER', 'KATIE PORTER', 'CHAD BIANCO', 'XAVIER BECERRA', 'STEVE HILTON']
+    valid_governors = ['Tom Steyer', 'Katie Porter', 'Chad Bianco', 'Xavier Becerra', 'Steve Hilton']
 
     headers = {
         "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 "
@@ -98,7 +98,19 @@ async def get_election_results():
                     name = row[2] if row[2] == 'MELANIE BAGBY' else row[2].title()
                     bagby_results.append([name, format(int(row[4]), ","), row[5] + '%'])
 
+    response = requests.get("https://api.sos.ca.gov/returns/governor", headers=headers)
+
+    payload = response.json()
+
+    candidates = payload.get('candidates')
+    for candidate in candidates:
+        if candidate['Name'] in valid_governors:
+            name = 'TOM STEYER' if candidate['Name'] == 'Tom Steyer' else candidate['Name']
+            steyer_results.append([name, candidate['Votes'], candidate['Percent'] + '%'])
+
     return f'# 📈 Live Election Results\n' \
+           f"## Governor Race ({payload.get('ReportingTime')})\n" \
+           f'{tableize(steyer_results)}\n' \
            f'## District 2 Race\n'          \
            f'{tableize(joanna_results)}\n'   \
            f'## District 4 Race\n'            \
@@ -182,7 +194,7 @@ def tableize(array):
     left_alignments = []
     for column in array[-1]:
         try:
-            float(column.replace('%', '').replace('$', ''))
+            float(column.replace('%', '').replace('$', '').replace(',', ''))
         except ValueError:
             left_alignments.append(True)
         else:
