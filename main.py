@@ -851,6 +851,10 @@ async def on_message(message):
         await message.channel.send(content=content, embed=sonoma_embed)
         return
 
+    if text == 'election results':
+        results = await HelperMethods.get_election_results()
+        await message.channel.send(results)
+
     if 'capacity meme' in text:
         await message.channel.send(file=discord.File(random.choice(C.CAPACITY_MEMES)))
 

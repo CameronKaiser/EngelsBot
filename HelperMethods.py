@@ -1,6 +1,10 @@
 # Standard Library
 import asyncio
 import datetime
+import requests
+import zipfile
+import io
+import csv
 
 # Third Party
 import cv2
@@ -62,6 +66,43 @@ async def get_predefined_objects(client):
                 f'Ensure the ID is correct and the bot has access to them - {objects_processed.failures}', end='')
 
         print()
+
+async def get_election_results():
+    joanna_results = [['Candidate', 'Votes', 'Percentage']]
+    bagby_results  = [['Candidate', 'Votes', 'Percentage']]
+    steyer_results = [['Candidate', 'Votes', 'Percentage']]
+
+    valid_governors = ['TOM STEYER', 'KATIE PORTER', 'CHAD BIANCO', 'XAVIER BECERRA', 'STEVE HILTON']
+
+    headers = {
+        "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 "
+                      "(KHTML, like Gecko) Chrome/124.0 Safari/537.36"
+    }
+    response = requests.get("https://results.enr.clarityelections.com//CA/Sonoma/126199/374141/reports/summary.zip", headers=headers)
+
+    with zipfile.ZipFile(io.BytesIO(response.content)) as zipped:
+        file_name = zipped.namelist()[0]
+
+        with zipped.open(file_name) as file:
+            text   = io.TextIOWrapper(file, encoding="utf-8", errors="replace")
+            reader = csv.reader(text)
+
+            for row in reader:
+                if 'County Supervisor, 2nd District' in row[1]:
+                    name = row[2] if row[2] == 'JOANNA PAUN' else row[2].title()
+                    joanna_results.append([name, format(int(row[4]), ","), row[5] + '%'])
+                elif row[1] == 'Governor (Vote For 1)' and row[2] in valid_governors:
+                    name = row[2] if row[2] == 'TOM STEYER' else row[2].title()
+                    steyer_results.append([name, format(int(row[4]), ","), row[5] + '%'])
+                elif 'County Supervisor, 4th District' in row[1]:
+                    name = row[2] if row[2] == 'MELANIE BAGBY' else row[2].title()
+                    bagby_results.append([name, format(int(row[4]), ","), row[5] + '%'])
+
+    return f'# 📈 Live Election Results\n' \
+           f'## District 2 Race\n'          \
+           f'{tableize(joanna_results)}\n'   \
+           f'## District 4 Race\n'            \
+           f'{tableize(bagby_results)}'
 
 async def get_branches(client):
     for branch in BRANCHES:
