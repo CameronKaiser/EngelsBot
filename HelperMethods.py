@@ -1,6 +1,7 @@
 # Standard Library
 import asyncio
 import datetime
+import random
 from email.utils import parsedate_to_datetime
 from zoneinfo import ZoneInfo
 
@@ -8,6 +9,7 @@ import requests
 import zipfile
 import io
 import csv
+import re
 
 # Third Party
 import cv2
@@ -71,11 +73,50 @@ async def get_predefined_objects(client):
 
         print()
 
-async def check_election():
+async def acquire_wisdom(message):
+    words = re.findall(r"[a-zA-Z]+", message)
+
+    scores = {}
+    for question in Configuration.QUESTIONS:
+        score = 0
+        for trigger_group in question.trigger_words:
+            for trigger_word in trigger_group:
+                if trigger_word in words:
+                    score += 1
+                    break
+
+        if question.imperative_words:
+            for imperative_group in question.imperative_words:
+                approved = False
+                for imperative_word in imperative_group:
+                    if imperative_word in words:
+                        approved = True
+                        break
+
+                if not approved:
+                    score = 0
+                    break
+
+
+        scores[random.choice(question.answers)] = score / len(words)
+
+    print(scores)
+
+    best = max(scores.items(), key=lambda x: x[1])
+    if best[1] >= 0.25:
+        return best[0]
+    elif '?' in message:
+        return random.choice(Configuration.MISUNDERSTANDING_ANSWERS)
+
+    return None
+
+async def check_election(channel):
+    print('1')
     if Mutables.governor_election_last_modified is None or Mutables.local_election_last_modified is None:
         await get_election_results()
         return
 
+    print('2')
     previous_local_time    = Mutables.local_election_last_modified
     previous_governor_time = Mutables.governor_election_last_modified
 
@@ -84,14 +125,18 @@ async def check_election():
     new_governor_results = ""
     new_local_results    = ""
 
+    print(f'{previous_local_time} vs {Mutables.local_election_last_modified}')
+    print(f'{previous_governor_time} vs {Mutables.governor_election_last_modified}')
+
     if Mutables.governor_election_last_modified != previous_governor_time:
         new_governor_results = "# 🚨 NEW GOVERNOR RESULTS!\n"
 
     if Mutables.local_election_last_modified != previous_local_time:
         new_local_results = "# 🚨 NEW SONOMA COUNTY RESULTS!\n"
 
-    if new_governor_results or new_local_results:
-        await  Configuration.CHANNELS.DSA_CHATTING.send(f"{new_governor_results}{new_local_results}{message}")
+   # if new_governor_results or new_local_results:
+    if new_local_results:
+        await channel.send(f"{new_governor_results}{new_local_results}{message}")
 
 async def get_sonoma_election_link():
     async with async_playwright() as p:
@@ -239,7 +284,20 @@ async def update_events(client):
 
     diagnostics = f'Calendar events synced! ({added} added, {updated} updated, {deleted} deleted)'
     print(diagnostics)
+
     return diagnostics
+
+async def announce_events(client):
+    events = client.solidarity_api.cached_events
+    for key, event in events.items():
+        minutes_away = int((event.start_time - datetime.datetime.now().astimezone(ZoneInfo("America/Los_Angeles"))).total_seconds() // 60)
+       # if 5 < minutes_away <= 60 and not event.virtual_pair and 'chapterbusiness' in event.tags:
+        if 5 < minutes_away <= 60 and not event.virtual_pair:
+            message = f"### {event.vague_title} is happening in {minutes_away} minutes!\n" \
+                      f"The event is taking place at {event.payload['location']}.\n\n"      \
+                      f"{event.payload['description'].split('RSVP: ')[0] if event.payload['description'] else ''}"
+
+            await C.CHANNELS.BOT_TESTING.send(message)
 
 def grab_square_image():
     url = C.SQUARE_STREAM_URL  # Replace with actual ID

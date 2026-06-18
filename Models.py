@@ -4,7 +4,6 @@ from typing          import Any, Dict, Optional
 from dataclasses     import dataclass
 from dateutil.parser import isoparse
 
-import Configuration
 import Mutables
 # Easy Access
 from Configuration import ROLES
@@ -37,6 +36,8 @@ class SolidarityEvent:
 
         self.id           = str(session.get('id'))
         self.data         = event
+        self.start_time   = datetime.fromisoformat(session['start_time'])
+        self.end_time     = datetime.fromisoformat(session[  'end_time'])
         self.tags         = [tag.replace('_', '').replace('-', '').lower() for tag in event.get('tags') + event.get('campaign_tags') + session.get('tags')]
         self.scope_id     = event.get('scope_id')
         self.private      = True if 'private' in self.tags else False

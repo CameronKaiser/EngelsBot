@@ -11,7 +11,6 @@ import numpy as np
 import discord
 import discord.ext
 
-import Configuration
 # Local Modules
 import Configuration as C
 import Airtable
@@ -83,10 +82,11 @@ async def on_ready():
 
     if not scheduler.running:
         scheduler.start()
-        scheduler.add_job(HelperMethods.create_forum_digest, CronTrigger(day_of_week='sun', hour=9), args=[client, CHANNELS.DSA_BUSINESS])
-        scheduler.add_job(client.solidarity_api.get_users  , CronTrigger(hour='0,5-23'            )                                      )
-        scheduler.add_job(HelperMethods.update_events      , CronTrigger(hour='0,5-23'            ), args=[client]                       )
-        scheduler.add_job(HelperMethods.check_election     , CronTrigger(minute="*/5"             ),                                     )
+        scheduler.add_job(HelperMethods.create_forum_digest, CronTrigger(day_of_week = 'sun',       hour =  9), args=[client, CHANNELS.DSA_BUSINESS])
+        scheduler.add_job(client.solidarity_api.get_users  , CronTrigger(hour        = '0,4-23'              )                                      )
+        scheduler.add_job(HelperMethods.update_events      , CronTrigger(hour        = '0,4-23', minute = 58), args=[client]                       )
+        scheduler.add_job(HelperMethods.check_election     , CronTrigger(minute      = "*/5"                 ), args=[CHANNELS.DSA_CHATTING]        )
+        scheduler.add_job(HelperMethods.announce_events    , CronTrigger(hour        = '0,5-23'              ), args=[client]                       )
 
 # -------------------------------------------------------------------------------------------------------------------------------------------------------------
 #    ~ Cron Jobs ~
@@ -746,6 +746,13 @@ async def on_message(message):
         await message.add_reaction('🤨')
         await CHANNELS.AUTO_MOD.send(HelperMethods.generate_spam_warning(message))
         return
+
+    if len(text) >= 6 and text[:6] == 'engels':
+        response = await HelperMethods.acquire_wisdom(text)
+
+        if response:
+            await message.channel.send(response)
+            return
 
     if '.quote' in text and message.channel in CHANNELS.QUOTE_PERMITTED:
 
