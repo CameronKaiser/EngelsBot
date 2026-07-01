@@ -42,6 +42,7 @@ class SolidarityEvent:
         self.scope_id     = event.get('scope_id')
         self.private      = True if 'private' in self.tags else False
         self.virtual_pair = True if session.get('paired_meci_id') and str(session.get('event_type')) == 'virtual' else False
+        self.hide_address = event.get('hide_address_until_rsvp')
 
         description = SolidarityEvent.build_description(event, session)
         summary     = SolidarityEvent.build_summary    (self, event, session)
@@ -51,7 +52,7 @@ class SolidarityEvent:
 
         payload   = ({'id' : str(session.get('id'             )),
                  'summary' :                  summary           ,
-                'location' :     session.get('location_address'),
+                'location' :     session.get('location_address') if not self.hide_address else 'Address revealed upon RSVP',
              'description' :                  description       ,
                    'start' : {'dateTime': session['start_time']},
                      'end' : {'dateTime': session['end_time'  ]},
