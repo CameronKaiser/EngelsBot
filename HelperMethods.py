@@ -15,11 +15,13 @@ import re
 import cv2
 import streamlink
 from playwright.async_api import async_playwright
+from bs4 import BeautifulSoup
 
 import Configuration
 # Local Module
 import Mutables
 import Configuration as C
+from Models import GovernmentMeeting
 
 # Easy Access
 from Configuration import (ROLES, GUILD_ID, REGISTRIES, BRANCHES, Branch)
@@ -298,6 +300,137 @@ async def announce_events(client):
                       f"{event.payload['description'].split('RSVP: ')[0] if event.payload['description'] else ''}"
 
             await C.CHANNELS.BOT_TESTING.send(message)
+
+async def compile_meeting_message():
+
+    events = []
+
+    #   SANTA ROSA CITY COUNCIL
+
+    url = "https://santa-rosa.legistar.com/DepartmentDetail.aspx?ID=17190&GUID=2FBCEAF9-1480-46F3-B6E3-855EC2714EA4&Mode=MainBody"
+
+    resp = requests.get(url)
+
+    soup = BeautifulSoup(resp.text, "html.parser")
+
+    calendar = soup.find(id="ctl00_ContentPlaceHolder1_gridCalendar_ctl00")
+    if calendar is None:
+        raise ValueError("Target element not found")
+
+    santa_rosa_events = calendar.find_all("tr")
+    santa_rosa_event = santa_rosa_events[-1]
+
+    values = santa_rosa_event.find_all("td")
+
+#   The base event time may be the closed session - we will try to extract the public session time if available
+    detailed_time = None
+    accessible_agenda_element = values[6].find('a')
+    if accessible_agenda_element:
+        accessible_agenda_url = f"https://santa-rosa.legistar.com/{accessible_agenda_element.get('href')}"
+        accessible_agenda_dom = requests.get(accessible_agenda_url)
+        accessible_agenda     = BeautifulSoup(accessible_agenda_dom.text, "html.parser")
+        spans = accessible_agenda.find_all("span")
+
+        for i in range(min(100, len(spans))):
+            span = spans[i]
+            if "regular sess" in span.get_text().lower():
+                detailed_time = span
+                break
+
+    flock_detected = False
+    details_url = f"https://santa-rosa.legistar.com/{values[4].find('a').get('href')}"
+    details_dom = requests.get(details_url)
+    details     = BeautifulSoup(details_dom.text, "html.parser")
+    grid        = details.find(id="ctl00_ContentPlaceHolder1_gridMain")
+    body        = grid.find("tbody")
+    entries     = body.find_all("tr")
+    for entry in entries:
+        contents = entry.find_all("td")
+        if "flock" in contents[3].get_text().lower() or "flock" in contents[5].get_text().lower():
+            flock_detected = True
+            break
+
+    date     = values[0].get_text(strip=True)
+    time     = values[2].get_text(strip=True)
+    if detailed_time:
+        time = re.split(r'p\.m\.', detailed_time.get_text(strip=True), flags=re.I)[0] + "P.M."
+    location = values[3].get_text(strip=True).replace("\r\n", " ")
+    title    = "Santa Rosa City Council Meeting"
+    agenda_url = None
+    link = values[5].find("a")
+    if link and link.get("href"):
+        agenda_url = f"https://santa-rosa.legistar.com/{link.get('href')}"
+
+    santa_rosa_meeting = GovernmentMeeting(date, time, location, title, agenda_url, flock_detected)
+
+    petaluma_url = "https://cityofpetaluma.org/meetings/"
+
+    async with async_playwright() as p:
+        browser = await p.chromium.launch(headless=True, args=["--disable-blink-features=AutomationControlled", ])
+
+        context = await browser.new_context(
+            user_agent=(
+                "Mozilla/5.0 (Windows NT 10.0; Win64; x64) "
+                "AppleWebKit/537.36 (KHTML, like Gecko) "
+                "Chrome/124.0.0.0 Safari/537.36"
+            ),
+            locale="en-US",
+            viewport={"width": 1920, "height": 1080},
+        )
+
+        # Remove navigator.webdriver = true
+        await context.add_init_script("""
+                    Object.defineProperty(navigator, 'webdriver', {
+                        get: () => undefined
+                    });
+                """)
+
+        # Fake Chrome-specific properties
+        await context.add_init_script("""
+                    Object.defineProperty(navigator, 'platform', {
+                        get: () => 'Win32'
+                    });
+                """)
+
+        page = await context.new_page()
+        await page.goto(petaluma_url, wait_until="networkidle")
+
+        frame = page.frame(name="contentframe")
+
+        await frame.wait_for_selector("#upcomingMeetingsTable")
+        event_list = frame.locator("#upcomingMeetingsTable").locator("tbody")
+
+        petaluma_events = await event_list.locator("tr").all()
+
+        for petaluma_event in petaluma_events:
+            print(await petaluma_event.inner_html())
+            details = await petaluma_event.locator("td").all()
+            if "city council" in (await details[0].inner_text()).lower():
+                date_string = (await details[1].inner_text()).split(" ")
+
+                date = date_string[0] + " " + date_string[1] + " " + date_string[2]
+                time = date_string[3] + " " + date_string[4]
+                location = "Petaluma Community Center, 320 N. McDowell Blvd, Petaluma, CA 94954"
+                title = "Petaluma City Council Meeting"
+                agenda_url = None
+                links = await petaluma_event.locator("a").all()
+                if links:
+                    agenda_url = "https://cityofpetaluma.primegov.com" + await links[0].get_attribute("href")
+
+                petaluma_meeting = GovernmentMeeting(date, time, location, title, agenda_url, flock_detected)
+                events.append(petaluma_meeting)
+
+                break
+
+        await browser.close()
+
+    events.append(santa_rosa_meeting)
+
+    event_strings = []
+    for event in events:
+        event_strings.append(event.__str__())
+
+    return "\n".join(event_strings)
 
 def grab_square_image():
     url = C.SQUARE_STREAM_URL  # Replace with actual ID
