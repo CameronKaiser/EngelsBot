@@ -808,6 +808,10 @@ async def on_message(message):
         await message.channel.send(embed=embed)
         return
 
+    if 'flockwatch' in text:
+        meetings = await HelperMethods.compile_meeting_message()
+        await message.channel.send(meetings)
+
 #   Grabs a realtime photo of Old Courthouse Square using the livestream (currently broken due to youtube changing URL functionality)
     if ('city square' in text or 'courthouse square' in text or text == 'square' or 'santa rosa square' in text) and len(text) < 30:
 

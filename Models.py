@@ -25,6 +25,29 @@ class Response:
     def ok(self) -> bool:
         return 200 <= self.status < 300
 
+class GovernmentMeeting:
+
+    def __init__(self, date, time, location, title, agenda_url, flock_detected):
+        self.date       = date
+        self.time       = time
+        self.location   = location
+        self.title      = title
+        self.agenda_url = agenda_url
+        self.flock_detected = flock_detected
+
+    def __str__(self):
+        message = f"- **{self.title}**\n"         \
+                  f"  - {self.date} - {self.time}\n" \
+                  f"  - {self.location}"
+
+        if self.flock_detected:
+            message += "\n  - 🚨 FLOCK ACTIVITY DETECTED"
+
+        if self.agenda_url:
+            message += f"\n  - ([see agenda]({self.agenda_url}))"
+
+        return message
+
 class SolidarityUser:
 
     def __init__(self, user):
@@ -36,8 +59,8 @@ class SolidarityEvent:
 
         self.id           = str(session.get('id'))
         self.data         = event
-        self.start_time   = datetime.fromisoformat(session['start_time'])
-        self.end_time     = datetime.fromisoformat(session[  'end_time'])
+        self.start_time   = datetime.fromisoformat(session['start_time'].replace("Z", "+00:00"))
+        self.end_time     = datetime.fromisoformat(session[  'end_time'].replace("Z", "+00:00"))
         self.tags         = [tag.replace('_', '').replace('-', '').lower() for tag in event.get('tags') + event.get('campaign_tags') + session.get('tags')]
         self.scope_id     = event.get('scope_id')
         self.private      = True if 'private' in self.tags else False
@@ -48,14 +71,14 @@ class SolidarityEvent:
         summary     = SolidarityEvent.build_summary    (self, event, session)
 
         self.vague_title = summary
-        self.dated_title = f"{summary} - {datetime.fromisoformat(session['start_time']).strftime('%m/%d/%y')}"
+        self.dated_title = f"{summary} - {datetime.fromisoformat(session['start_time'].replace('Z', '+00:00')).strftime('%m/%d/%y')}"
 
         payload   = ({'id' : str(session.get('id'             )),
                  'summary' :                  summary           ,
                 'location' :     session.get('location_address') if not self.hide_address else 'Address revealed upon RSVP',
              'description' :                  description       ,
-                   'start' : {'dateTime': session['start_time']},
-                     'end' : {'dateTime': session['end_time'  ]},
+                   'start' : {'dateTime': session['start_time'].replace("Z", "+00:00")},
+                     'end' : {'dateTime': session['end_time'  ].replace("Z", "+00:00")},
                   'status' : 'confirmed' if not (self.private or self.virtual_pair or self.scope_id in banned_scope_ids) else 'cancelled'})
 
         self.payload      = SolidarityEvent.normalize(payload)
