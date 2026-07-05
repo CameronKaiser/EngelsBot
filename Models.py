@@ -36,7 +36,8 @@ class GovernmentMeeting:
         self.flock_detected = flock_detected
 
     def __str__(self):
-        message = f"- **{self.title}** - {self.date} {self.time}\n" \
+        message = f"- **{self.title}**\n"         \
+                  f"  - {self.date} - {self.time}\n" \
                   f"  - {self.location}"
 
         if self.flock_detected:

@@ -292,14 +292,16 @@ async def update_events(client):
 async def announce_events(client):
     events = client.solidarity_api.cached_events
     for key, event in events.items():
-        minutes_away = int((event.start_time - datetime.datetime.now().astimezone(ZoneInfo("America/Los_Angeles"))).total_seconds() // 60)
-       # if 5 < minutes_away <= 60 and not event.virtual_pair and 'chapterbusiness' in event.tags:
+        minutes_away = int((event.start_time - datetime.datetime.now().astimezone(ZoneInfo("America/Los_Angeles"))).total_seconds() // 60) + 1
         if 5 < minutes_away <= 60 and not event.virtual_pair:
             message = f"### {event.vague_title} is happening in {minutes_away} minutes!\n" \
                       f"The event is taking place at {event.payload['location']}.\n\n"      \
                       f"{event.payload['description'].split('RSVP: ')[0] if event.payload['description'] else ''}"
 
-            await C.CHANNELS.BOT_TESTING.send(message)
+            if 'chapterbusiness' in event.tags:
+                await C.CHANNELS.DSA_BUSINESS.send(message)
+            elif 'social' in event.tags:
+                await C.CHANNELS.DSA_CHATTING.send(message)
 
 async def compile_meeting_message():
 
@@ -363,6 +365,8 @@ async def compile_meeting_message():
 
     santa_rosa_meeting = GovernmentMeeting(date, time, location, title, agenda_url, flock_detected)
 
+#   PETALUMA CITY COUNCIL
+
     petaluma_url = "https://cityofpetaluma.org/meetings/"
 
     async with async_playwright() as p:
@@ -403,11 +407,11 @@ async def compile_meeting_message():
         petaluma_events = await event_list.locator("tr").all()
 
         for petaluma_event in petaluma_events:
-            print(await petaluma_event.inner_html())
             details = await petaluma_event.locator("td").all()
             if "city council" in (await details[0].inner_text()).lower():
                 date_string = (await details[1].inner_text()).split(" ")
 
+                flock_detected = False
                 date = date_string[0] + " " + date_string[1] + " " + date_string[2]
                 time = date_string[3] + " " + date_string[4]
                 location = "Petaluma Community Center, 320 N. McDowell Blvd, Petaluma, CA 94954"
@@ -416,6 +420,21 @@ async def compile_meeting_message():
                 links = await petaluma_event.locator("a").all()
                 if links:
                     agenda_url = "https://cityofpetaluma.primegov.com" + await links[0].get_attribute("href")
+                    if len(links) > 1:
+                        accessible_agenda_url = "https://cityofpetaluma.primegov.com" + await links[1].get_attribute("href")
+                        accessible_agenda_dom = requests.get(accessible_agenda_url)
+                        accessible_agenda = BeautifulSoup(accessible_agenda_dom.text, "html.parser")
+
+                        divs = accessible_agenda.find(id="MeetingContents").find_all("div")
+
+                        for i in range(min(5, len(divs))):
+                            div = divs[i]
+                            lines = div.get_text(separator="\n").split("\n")
+                            for line in lines:
+                                if "reg" in line.lower() and "session" in line.lower():
+                                    parts = line.split(" ")
+                                    time = parts[2] + (" " + parts[3] if len(parts) > 3 else "")
+                                    break
 
                 petaluma_meeting = GovernmentMeeting(date, time, location, title, agenda_url, flock_detected)
                 events.append(petaluma_meeting)
@@ -423,6 +442,145 @@ async def compile_meeting_message():
                 break
 
         await browser.close()
+
+#   COTATI CITY COUNCIL
+
+    cotati_url = "https://cotaticity.primegov.com/public/portal"
+
+    async with async_playwright() as p:
+        browser = await p.chromium.launch(headless=True, args=["--disable-blink-features=AutomationControlled", ])
+
+        context = await browser.new_context(
+            user_agent=(
+                "Mozilla/5.0 (Windows NT 10.0; Win64; x64) "
+                "AppleWebKit/537.36 (KHTML, like Gecko) "
+                "Chrome/124.0.0.0 Safari/537.36"
+            ),
+            locale="en-US",
+            viewport={"width": 1920, "height": 1080},
+        )
+
+        # Remove navigator.webdriver = true
+        await context.add_init_script("""
+                        Object.defineProperty(navigator, 'webdriver', {
+                            get: () => undefined
+                        });
+                    """)
+
+        # Fake Chrome-specific properties
+        await context.add_init_script("""
+                        Object.defineProperty(navigator, 'platform', {
+                            get: () => 'Win32'
+                        });
+                    """)
+
+        page = await context.new_page()
+        await page.goto(cotati_url, wait_until="networkidle")
+
+
+
+        await page.wait_for_selector("#upcomingMeetingsTable")
+        event_list = page.locator("#upcomingMeetingsTable").locator("tbody")
+
+        cotati_events = await event_list.locator("tr").all()
+
+        for cotati_event in cotati_events:
+            details = await cotati_event.locator("td").all()
+            if "city council" in (await details[0].inner_text()).lower():
+                date_string = (await details[1].inner_text()).split(" ")
+
+                flock_detected = False
+                date = date_string[0] + " " + date_string[1] + " " + date_string[2]
+                time = date_string[3] + " " + date_string[4]
+                location = "City Council Chamber, City Hall 201 W. Sierra Avenue"
+                title = "Cotati City Council Meeting"
+                agenda_url = None
+                links = await cotati_event.locator("a").all()
+                if links:
+                    agenda_url = "https://cotaticity.primegov.com" + await links[0].get_attribute("href")
+                #   Revisit when meeting is closer so we know structure
+                    if len(links) > 5:
+                        accessible_agenda_url = "https://cotaticity.primegov.com" + await links[1].get_attribute("href")
+                        accessible_agenda_dom = requests.get(accessible_agenda_url)
+                        accessible_agenda = BeautifulSoup(accessible_agenda_dom.text, "html.parser")
+
+                        divs = accessible_agenda.find(id="MeetingContents").find_all("div")
+
+                        for i in range(min(5, len(divs))):
+                            div = divs[i]
+                            lines = div.get_text(separator="\n").split("\n")
+                            for line in lines:
+                                if "reg" in line.lower() and "session" in line.lower():
+                                    parts = line.split(" ")
+                                    time = parts[2] + (" " + parts[3] if len(parts) > 3 else "")
+                                    break
+
+                cotati_meeting = GovernmentMeeting(date, time, location, title, agenda_url, flock_detected)
+                events.append(cotati_meeting)
+
+                break
+
+        await browser.close()
+
+ #   ROHNERT PARK CITY COUNCIL
+
+    rohnert_park_url = "https://www.rpcity.ca.gov/129/Meeting-Central"
+
+    async with async_playwright() as p:
+        browser = await p.chromium.launch(headless=True, args=["--disable-blink-features=AutomationControlled", ])
+
+        context = await browser.new_context(
+            user_agent=(
+                "Mozilla/5.0 (Windows NT 10.0; Win64; x64) "
+                "AppleWebKit/537.36 (KHTML, like Gecko) "
+                "Chrome/124.0.0.0 Safari/537.36"
+            ),
+            locale="en-US",
+            viewport={"width": 1920, "height": 1080},
+        )
+
+        # Remove navigator.webdriver = true
+        await context.add_init_script("""
+                    Object.defineProperty(navigator, 'webdriver', {
+                        get: () => undefined
+                    });
+                """)
+
+        # Fake Chrome-specific properties
+        await context.add_init_script("""
+                    Object.defineProperty(navigator, 'platform', {
+                        get: () => 'Win32'
+                    });
+                """)
+
+        page = await context.new_page()
+        await page.goto(rohnert_park_url, wait_until="networkidle")
+
+        frame = page.frame(name="myiFrame")
+
+        await frame.wait_for_selector("tbody")
+        event_list = frame.locator("tbody")
+        rohnert_park_events = await event_list.locator("tr").all()
+        for event in rohnert_park_events:
+            parts = await event.locator("td").all()
+            first_part = (await parts[0].inner_text()).lower()
+            if "city council" in first_part and not "cancel" in first_part and not "closed" in first_part:
+                date_string = (await parts[1].inner_text()).split(" - ")
+
+                flock_detected = False
+                date = date_string[0]
+                time = date_string[1]
+                location = "City Hall, Council Chamber - 130 Avram Avenue, Rohnert Park, California"
+                title = "Rohnert Park City Council Meeting"
+                agenda_url = None
+
+                if not await parts[2].get_attribute("id") and parts[2].locator("a"):
+                    agenda_url = "https:" + await parts[2].locator("a").get_attribute("href")
+
+                rohnert_park_meeting = GovernmentMeeting(date, time, location, title, agenda_url, flock_detected)
+                events.append(rohnert_park_meeting)
+
+                break
 
     events.append(santa_rosa_meeting)
 
