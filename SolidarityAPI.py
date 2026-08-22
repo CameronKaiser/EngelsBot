@@ -392,6 +392,7 @@ class VerificationModal(discord.ui.Modal, title="Are you a DSA Member? Let's get
                 updated_roles = set(user.roles)
                 updated_roles.discard(ROLES.DSA_CURIOUS)
                 updated_roles.add    (ROLES.DSA_MEMBER)
+                updated_roles.add    (ROLES.DSA_DISCORDER)
 
                 if branch:
                     print(f'User {user.name} in branch - adding role {branch.role.name}')

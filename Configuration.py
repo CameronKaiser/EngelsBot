@@ -5,7 +5,7 @@ from dataclasses import dataclass
 from   typing  import Optional
 
 # Third Party
-from   discord import Guild
+from   discord import Guild, utils
 
 ROOT_FOLDER     = os.path.dirname(os.path.abspath(__file__))
 IMAGE_FILE_PATH = f'{ROOT_FOLDER}/images/'
@@ -127,8 +127,10 @@ class CHANNELS(Discord_Object_Registry):
     RULES_AND_ROLES     = 1308831557036933272
     CALENDAR            = 1355288280870027465
     PERSONAL_REQUESTS   = 1426780469005123614
+    COMMS_REQUESTS      = 1538991167000289403
     QUOTE_PERMITTED     = [1436468298635284520, 1355310818060926977, 1316127393735245845]
     ABOUT               = 1308836338518196254
+    DSA_VOICE           = 1350916050849366159
 
 class ROLES(Discord_Object_Registry):
     _object_type        = 'role'
@@ -136,9 +138,20 @@ class ROLES(Discord_Object_Registry):
     ADMIN               = 1428192973069484033
     MODERATOR           = 1341486417251008553
     DSA_MEMBER          = 1386954497623986186
+    DSA_DISCORDER       = 1538326663069171712
     DSA_CURIOUS         = 1308839613166522378
     COMRADE             = 1308834783601889311
     CURIOUS             = 1308839613166522378
+    SOCIALITE           = 1538286789108830341
+    PUNDIT              = 1538288795756003499
+    ANTIFLOCKER         = 1538329563959140352
+    JOANNA_CAMPAIGNER   = 1538329715599876127
+    ROHNERT_PARK        = 1445468427140600031
+    SANTA_ROSA          = 1445460247870439536
+    PETALUMA            = 1445465603753377934
+    SONOMA              = 1445463518827778269
+    NORTH               = 1445471742180065441
+    WEST                = 1445471145561427978
     ADMIN_LIST          = [1428192973069484033, 1359004727886483486]
     COMMITTEES          = [1384346168670289980, 1362128533345931357, 1437686190437302324, 1437681405290221650, 1361768994016854226, 1370432153346900091,
                            1366622832913678457]
@@ -150,12 +163,13 @@ class MEMBERS(Discord_Object_Registry):
     SCATCYCLE           = 656371849935978500
     ENGELS_BOT          = 1436082306912616488
     CALVIN              = 1209645216357814383
+    TREASURER           = 1343775368649244712
 
 class MESSAGES(Discord_Object_Registry):
     _object_type        = 'message'
     COMMITTEE_SIGNUP    = (lambda: CHANNELS.COMMITTEE_SIGNUP, 1437584543983992892)
     ROLE_SIGNUP         = (lambda: CHANNELS.RULES_AND_ROLES , 1437584543983992892)
-    STEERING_TICKET     = (lambda: CHANNELS.ABOUT           , 1479185846811758704)
+    STEERING_TICKET     = (lambda: CHANNELS.ABOUT           , 1539825616596246629)
     VERIFY_BUTTON       = (lambda: CHANNELS.ABOUT           , 1494792725302738945)
 
 class EMOJIS(Discord_Object_Registry):
@@ -165,13 +179,24 @@ class EMOJIS(Discord_Object_Registry):
     ROSA                = 1448437667485319271
     ROSE                = 1478271266568798208
 
+class FORUMTAGS(Discord_Object_Registry):
+    _object_type        = 'tag'
+    COMMS_CONTENT       = (lambda: CHANNELS.COMMS_REQUESTS, 1539029149359013928)
+    COMMS_POST          = (lambda: CHANNELS.COMMS_REQUESTS, 1539029204450938960)
+    COMMS_CALENDAR      = (lambda: CHANNELS.COMMS_REQUESTS, 1539029290027323504)
+    COMMS_WEBSITE       = (lambda: CHANNELS.COMMS_REQUESTS, 1539029391323955362)
+    COMMS_FULFILLED     = (lambda: CHANNELS.COMMS_REQUESTS, 1539029008585330738)
+    COMMS_OUTSTANDING   = (lambda: CHANNELS.COMMS_REQUESTS, 1539084806632247336)
+
+
 REGISTRIES = [
     CATEGORIES,
     CHANNELS  ,
     ROLES     ,
     MEMBERS   ,
     MESSAGES  ,
-    EMOJIS
+    EMOJIS    ,
+    FORUMTAGS
 ]
 
 class Branch:
@@ -213,6 +238,10 @@ class Hydrator:
 
                         elif object_type == 'emoji':
                             discord_object = GUILD.get_emoji(discord_object_id)
+
+                        elif object_type == 'tag':
+                            forum, tag_id = discord_object_id
+                            discord_object = utils.get(forum().available_tags, id=tag_id)
 
                         discord_objects.append(discord_object)
 
@@ -503,11 +532,9 @@ world...          |            |                      |                   |
 ]
 
 MISUNDERSTANDING_ANSWERS = [
-    "imma be real chief, i have no idea what you just said",
     "... what?",
     "how tf am i supposed to know?",
     "ಠ_ಠ",
-    "imma keep it a buck on a stack, i didn't catch any of that",
     "一体全体、今何て言ったんだ？",
     "what is wrong with you?",
     "I plead the 5th.",
@@ -524,6 +551,12 @@ MISUNDERSTANDING_ANSWERS = [
     "┬┴┬┴┤(･_├┬┴┬┴",
     "67 🤪",
     "you get nothing! You lose! Good day sir!",
+    "im BUSY trying to lug marx's drunk ass into the HOUSE, call back later",
+    "The answer lies inside you.",
+    "Yes. Wait WAIT NO NOOO I MEAN NO I ME-",
+    "Is 5135802 / 39105i equal to 4?",
+    "Consuming 5913 gallons of water to infer the answer.... got it!\nweedeater",
+    "(ノಠ益ಠ)ノ彡┻━┻",
     '''Somebody once told me the world is gonna roll me
 I ain't the sharpest tool in the shed
 She was looking kind of dumb with her finger and her thumb
