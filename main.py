@@ -11,6 +11,7 @@ import numpy as np
 import discord
 import discord.ext
 
+import ButtonHub
 # Local Modules
 import Configuration as C
 import Airtable
@@ -58,6 +59,8 @@ async def on_ready():
     client.add_view(Ticket       .CreateTicketButton())
     client.add_view(Ticket       .CloseTicketButton ())
     client.add_view(SolidarityAPI.VerifyButton      ())
+    client.add_view(ButtonHub    .DiscordButtonHub  ())
+    client.add_view(ButtonHub    .ActionHub         ())
 
     if CHANNELS.DSA_CHATTING:
         client.loop.create_task(random_thought(CHANNELS.DSA_CHATTING))
@@ -116,7 +119,7 @@ async def on_member_join(member):
     message = f"Hi {member.mention}, welcome to the {C.CHAPTER_NAME} DSA Discord server! {EMOJIS.ROSE if EMOJIS.ROSE else '🌹'}\n\n" \
               f"Please introduce yourself here!\n" \
               f"What are your name and pronouns? How did you hear about us? What got you interested in socialism? Are you a DSA member? Are you a member of any other organizations (Indivisible, WFP, etc)?\n\n" \
-              f"Then check out {CHANNELS.ABOUT.mention} to get acquainted with us and {CHANNELS.RULES_AND_ROLES.mention} to read our rules and select your roles!"
+              f"Then check out {CHANNELS.ABOUT.mention} to get acquainted with us and read our rules and select your roles!"
 
     await CHANNELS.INTRODUCTIONS.send(content=message, embed=embed)
 
@@ -546,6 +549,85 @@ async def slash_command(interaction: discord.Interaction, channel_id: str):
 
     except Exception as e:
         await interaction.response.send_message(f'shit borked idk, prolly add a proper channel ID ({e})') # type: ignore
+
+@tree.command(name="spawn_role_hub", description="Spawns the role hub in the channel input", guild=discord.Object(id=GUILD_ID))
+async def slash_command(interaction: discord.Interaction, channel_id: str):
+    if not is_admin(interaction.user.roles):
+        await interaction.response.send_message("sorry boss, that's for admins only") # type: ignore
+        return
+
+    try:
+        embed = discord.Embed(
+            title       = "Personal Channel Management",
+            description = 'Use this hub to manage your experience. Do you JUST want to work on the Joanna Campaign? Are you JUST here for flock? Try using the "Focus" button, which will hide all non-critical channels!',
+            color       = discord.Color.dark_blue()
+        )
+
+        channel = await client.fetch_channel(int(channel_id))
+        message = await channel.send(embed=embed, view=ButtonHub.DiscordButtonHub())
+        await interaction.response.send_message(f'Channel management system generated at: {message.jump_url}') # type: ignore
+
+    except Exception as e:
+        await interaction.response.send_message(f'shit borked idk, prolly add a proper channel ID ({e})') # type: ignore
+
+@tree.command(name="spawn_action_hub", description="Spawns the action hub in the channel input", guild=discord.Object(id=GUILD_ID))
+async def slash_command(interaction: discord.Interaction, channel_id: str):
+    if not is_admin(interaction.user.roles):
+        await interaction.response.send_message("sorry boss, that's for admins only") # type: ignore
+        return
+
+    try:
+        embed = discord.Embed(
+            title       = "Action Hub",
+            description = 'Use this hub to perform actions. More coming soon!',
+            color       = discord.Color.blue()
+        )
+
+        channel = await client.fetch_channel(int(channel_id))
+        message = await channel.send(embed=embed, view=ButtonHub.ActionHub())
+        await interaction.response.send_message(f'Action hub generated at: {message.jump_url}') # type: ignore
+
+    except Exception as e:
+        await interaction.response.send_message(f'shit borked idk, prolly add a proper channel ID ({e})') # type: ignore
+
+@tree.command(name="replicate_role", description="Finds all members with input role and adds new role to them", guild=discord.Object(id=GUILD_ID))
+async def slash_command(interaction: discord.Interaction, existing_role_id: str, new_role_id: str):
+    if not is_admin(interaction.user.roles):
+        await interaction.response.send_message("sorry boss, that's for admins only") # type: ignore
+        return
+
+    await interaction.response.defer()  # type: ignore
+
+    try:
+        roles = await interaction.guild.fetch_roles()
+
+        existing_role = discord.utils.get(roles, id=int(existing_role_id))
+        new_role      = discord.utils.get(roles, id=int(new_role_id))
+
+        members_processed = 0
+        async for member in interaction.guild.fetch_members(limit=None):
+            if existing_role in member.roles:
+                await member.add_roles(new_role)
+                members_processed += 1
+
+        await interaction.followup.send(f'Role {new_role.name} added to {members_processed} users!')
+
+    except Exception as e:
+        await interaction.followup.send_message(f'shit borked idk, prolly add a proper role ID ({e})') # type: ignore
+
+@tree.command(name="quorum_check", description="Tallies the number of voting members in #DSA Member Voice", guild=discord.Object(id=GUILD_ID))
+async def slash_command(interaction: discord.Interaction):
+    if not is_admin(interaction.user.roles):
+        await interaction.response.send_message("sorry boss, that's for admins only") # type: ignore
+        return
+
+    channel_members = CHANNELS.DSA_VOICE.members
+    voting_members = 0
+    for member in channel_members:
+        if ROLES.DSA_MEMBER in member.roles:
+            voting_members += 1
+
+    await interaction.response.send_message(f"There are {voting_members} voting members in {CHANNELS.DSA_VOICE.mention}.")
 
 @tree.command(name="sync_airtable", description="Updates the members airtable with current information", guild=discord.Object(id=GUILD_ID))
 async def slash_command(interaction: discord.Interaction):
