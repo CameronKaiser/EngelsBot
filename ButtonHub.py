@@ -165,14 +165,15 @@ class CommsRequestModal(discord.ui.Modal, title="Comms Request Form"):
         self.client = client
 
     request_type = discord.ui.Label(
-        text="Request Type",
-        component=discord.ui.RadioGroup(
+        text="Request Type (select all that apply)",
+        component=discord.ui.CheckboxGroup(
             options=[
-                discord.RadioGroupOption(label="Content Creation" , value="content" ),
-                discord.RadioGroupOption(label="Social Media Post", value="post"    ),
-                discord.RadioGroupOption(label="Calendar Update"  , value="calendar"),
-                discord.RadioGroupOption(label="Website Update"   , value="website" )
-            ]
+                discord.CheckboxGroupOption(label="Content Creation" , value="content" ),
+                discord.CheckboxGroupOption(label="Social Media Post", value="post"    ),
+                discord.CheckboxGroupOption(label="Calendar Update"  , value="calendar"),
+                discord.CheckboxGroupOption(label="Website Update"   , value="website" )
+            ],
+            min_values=1
         )
     )
 
@@ -203,32 +204,33 @@ class CommsRequestModal(discord.ui.Modal, title="Comms Request Form"):
 
             await interaction.response.defer(ephemeral=True, thinking=True)
 
-            request_type = self.request_type.component.value
+            request_type = self.request_type.component.values
             title        = self.headline.value
             notes        = self.notes.value
             files        = [await file.to_file() for file in self.files.component.values]
 
-            tag = None
-            if request_type == "content":
-                tag = FORUMTAGS.COMMS_CONTENT
-            elif request_type == "post":
-                tag = FORUMTAGS.COMMS_POST
-            elif request_type == "calendar":
-                tag = FORUMTAGS.COMMS_CALENDAR
-            elif request_type == "website":
-                tag = FORUMTAGS.COMMS_WEBSITE
+            tags = [FORUMTAGS.COMMS_OUTSTANDING]
+
+            if "content" in request_type:
+                tags.append(FORUMTAGS.COMMS_CONTENT)
+            if "post" in request_type:
+                tags.append(FORUMTAGS.COMMS_POST)
+            if "calendar" in request_type:
+                tags.append(FORUMTAGS.COMMS_CALENDAR)
+            if "website" in request_type:
+                tags.append(FORUMTAGS.COMMS_WEBSITE)
 
             await CHANNELS.COMMS_REQUESTS.create_thread(
                 name=title,
                 content=f"Request submitted by: {user.mention}\n\n{notes}",
                 files=files,
-                applied_tags=[FORUMTAGS.COMMS_OUTSTANDING, tag]
+                applied_tags=tags
             )
 
             await interaction.followup.send("Request received! We'll fulfill it as soon as we can 🪄", ephemeral=True)
 
         except Exception as error:
             await CHANNELS.BOT_TESTING.send(f'‼️ User {user.mention}s comms request failed: {error}')
-            await interaction.response.send_message(
+            await interaction.followup.send.send_message(
                 content   = f"We're sorry, an error occurred and we were unable to submit your request. A log has been sent to the admin team and we will try to fix this ASAP! In the meantime, feel free to let us know your request in {CHANNELS.DSA_CHATTING.mention}!",
                 ephemeral = True)

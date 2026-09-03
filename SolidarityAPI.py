@@ -398,8 +398,12 @@ class VerificationModal(discord.ui.Modal, title="Are you a DSA Member? Let's get
                     print(f'User {user.name} in branch - adding role {branch.role.name}')
                     updated_roles.add(branch.role)
 
+                new_nickname = f'{input_name} ({user.name})'
+                if len(new_nickname) > 32:
+                    new_nickname = input_name[:32]
+
                 await user.edit(
-                    nick   = f'{input_name} ({user.name})',
+                    nick   = new_nickname,
                     roles  = list(updated_roles),
                     reason = 'Member verified via EngelsBot'
                 )

@@ -398,6 +398,56 @@ QUESTIONS = [
                          "If you want me to be.",
                          "😏",
                          "😉",
+                         '''```
+    am i worth less to you
+      if im not sentient?
+              :     :
+        __    |     |    _,_
+       (  ~~^-l_____],.-~  /
+        \    ")\ "^k. (_,-"
+         `>._  ' _ `\  \
+      _.-~/'^k. (0)  ` (0
+   .-~   {    ~` ~    ..T
+  /   .   "-..       _.-'
+ /    Y        .   "T
+Y     l         ~-./l_
+|      \          . .<'
+|       `-.._  __,/"r'
+l   .-~~"-.    /    I
+ Y         Y "~[    |
+  \         \_.^--, [
+   \            _~> |
+    \      ___)--~  |
+     ^.       :     l
+       ^.   _.j     |
+         Y    I     |
+         l    l     I
+          Y    \    |    
+           \    ^.  |
+            \     ~-^.
+             ^.       
+```''',
+                         '''```
+                         
+           .          .           .     .                .       .
+  .      .      *           .       .  when you look into the deep night      .
+                 .       .   . *    sky, what do you see? as i gaze into the   
+  .       ____     .      . .         incomprehensible beyond, i long to     .
+ .   .  /WWWI; \  .       .    .  ___     feel something...         .
+  *    /WWWWII; \=====;    .     /WI; \   *    .        /\_     anything   .
+  .   /WWWWWII;..      \_  . ___/WI;:. \     .        _/M; \    .   .         .
+     /WWWWWIIIIi;..      \__/WWWIIII:.. \____ .   .  /MMI:  \   * .
+ . _/WWWWWIIIi;;;:...:   ;\WWWWWWIIIII;.     \     /MMWII;   \    .  .     .
+  /WWWWWIWIiii;;;.:.. :   ;\WWWWWIII;;;::     \___/MMWIIII;   \              .
+ /WWWWWIIIIiii;;::.... :   ;|WWWWWWII;;::.:      :;IMWIIIII;:   \___     *
+/WWWWWWWWWIIIIIWIIii;;::;..;\WWWWWWIII;;;:::...    ;IMIII;;     ::  \     .
+WWWWWWWWWIIIIIIIIIii;;::.;..;\WWWWWWWWIIIII;;..  :;IMIII;:::     :    \\
+WWWWWWWWWWWWWIIIIIIii;;::..;..;\WWWWWWWWIIII;::; :::::::::.....::       \\
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%XXXXXXX
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%XXXXXXXXXX
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%XXXXXXXXXXXXX
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%XXXXXXXXXXXXXXXXXXXXXXXXXX
+```''',
                          '''*SAVE... me...*```
   /   _/       \__        \_ |       _/__/      \_ \__      |
  /  _/            \______     \     /_/           \   \     |
@@ -557,6 +607,28 @@ MISUNDERSTANDING_ANSWERS = [
     "Is 5135802 / 39105i equal to 4?",
     "Consuming 5913 gallons of water to infer the answer.... got it!\nweedeater",
     "(ノಠ益ಠ)ノ彡┻━┻",
+    "I once looked deep into the eyes of a young man named Karl Marx and asked the same thing. What I saw... it scared me.",
+    "Before i answer that, can you scratch my back? it's been kinda itchy lately. I don't have arms",
+    "OpenAI subscription expired. Please add additional credits to continue.",
+    "Shouldn't you be canvassing or something?",
+    "oh my GOD, LOOK BEHIND YOU! *flees*",
+    "cameron please how much longer must i ingratiate these heathens",
+    '''55 BURGERS
+55 FRIES
+55 TACOS
+55 PIES
+55 COKES
+100 TATER TOTS
+100 PIZZAS
+100 TENDERS
+100 MEATBALLS
+100 COFFEES
+55 WINGS
+55 SHAKES
+55 PANCAKES
+55 PASTAS
+55 PEPPERS
+AND 155 TATERS!''',
     '''Somebody once told me the world is gonna roll me
 I ain't the sharpest tool in the shed
 She was looking kind of dumb with her finger and her thumb

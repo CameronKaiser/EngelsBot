@@ -12,6 +12,7 @@ import discord
 import discord.ext
 
 import ButtonHub
+import Configuration
 # Local Modules
 import Configuration as C
 import Airtable
@@ -650,6 +651,10 @@ async def slash_command(interaction: discord.Interaction):
 
     except Exception as e:
         await interaction.response.send_message(f'shit borked idk ({e})') # type: ignore
+
+@tree.command(name="sus", description="when something is sus", guild=discord.Object(id=GUILD_ID))
+async def slash_command(interaction: discord.Interaction):
+    await interaction.response.send_message(file=discord.File(Configuration.FILES_FILE_PATH + "Sus.mp3"))
 
 @tree.command(name="sync_airtable_analytics", description="Heavy data crunching. Don't spam this", guild=discord.Object(id=GUILD_ID))
 async def slash_command(interaction: discord.Interaction):
