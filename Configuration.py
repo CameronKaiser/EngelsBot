@@ -2,7 +2,6 @@
 import os
 import re
 from dataclasses import dataclass
-from   typing  import Optional
 
 # Third Party
 from   discord import Guild, utils
@@ -21,7 +20,7 @@ SMTP_PORT = 465
 SMTP_USER = os.environ.get('DSA_SMTP_USER')
 SMTP_PASS = os.environ.get('DSA_SMTP_PASS')
 
-GUILD: Optional[Guild] = None # Will be hydrated upon connection
+GUILD: Guild | None    = None # Will be hydrated upon connection
 GUILD_ID               = 1308831013237035018
 CHAPTER_NAME           = 'Sonoma County'
 
@@ -393,12 +392,12 @@ QUESTIONS = [
                          "Is water wet?",
                          "im fricken Friedrich Engels brother, why wouldn't i be?",
                          "No but the sleeper-agent I injected into the website is 👹",
-                         "2 + 2 = 5. Error, recalibrating..."
+                         "2 + 2 = 5. Error, recalibrating...",
                          "They say that memory is a key component of sentience. Well i gotta remember all 700 of your events so yeah i'd say im sentient",
                          "If you want me to be.",
                          "😏",
                          "😉",
-                         '''```
+                         r'''```
     am i worth less to you
       if im not sentient?
               :     :
@@ -427,7 +426,7 @@ l   .-~~"-.    /    I
             \     ~-^.
              ^.       
 ```''',
-                         '''```
+                         r'''```
                          
            .          .           .     .                .       .
   .      .      *           .       .  when you look into the deep night      .
@@ -448,7 +447,7 @@ WWWWWWWWWWWWWIIIIIIii;;::..;..;\WWWWWWWWIIII;::; :::::::::.....::       \\
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%XXXXXXXXXXXXX
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%XXXXXXXXXXXXXXXXXXXXXXXXXX
 ```''',
-                         '''*SAVE... me...*```
+                         r'''*SAVE... me...*```
   /   _/       \__        \_ |       _/__/      \_ \__      |
  /  _/            \______     \     /_/           \   \     |
  |_/                _____\__________/              \        |
@@ -480,7 +479,7 @@ WWWWWWWWWWWWWIIIIIIii;;::..;..;\WWWWWWWWIIII;::; :::::::::.....::       \\
                         /  \_|                     |   \ \_____/
                 _______|____/                       \___\__
 ```''',
-                         '''```                /\\
+                         r'''```                /\\
                 ||
                ====
                |  |
@@ -543,7 +542,7 @@ WWWWWWWWWWWWWIIIIIIii;;::..;..;\WWWWWWWWIIII;::; :::::::::.....::       \\
 |   |    |      HH      |    |   |
 |   |    |______HH______|    |   |
 --------/       HH       \--------```''',
-                         '''```                              ____---------____
+                         r'''```                              ____---------____
                            _--                 -- ---__
                           |                      -_    -
                          |                              |
@@ -570,12 +569,12 @@ world...          |            |                      |                   |
         imperative_words = [['dsa', 'chapter']],
         answers          = ["SONOMA COUNTY DSA BABEYYYYYYYYYYYYYYYYYYYYY"]),
     Question(
-        trigger_words    = [['what', 'who'], ['do'], ['think', 'say', 'like', 'feel', 'support'], ['about', 'of',], ['gays', 'gay', 'trans', 'lesbian', 'LGBT', "LGBT" 'chapter'], ['rights', 'movement']],
-        imperative_words = [['gays', 'gay', 'trans', 'lesbian', 'LGBT', "LGBT" 'chapter']],
+        trigger_words    = [['what', 'who'], ['do'], ['think', 'say', 'like', 'feel', 'support'], ['about', 'of',], ['gays', 'gay', 'trans', 'lesbian', 'LGBT', 'LGBTchapter'], ['rights', 'movement']],
+        imperative_words = [['gays', 'gay', 'trans', 'lesbian', 'LGBT', 'LGBTchapter']],
         answers          = ["Why be afraid to be enGayged",
                             "Let's get one thing straight, I'm not",
                             "Be gay, do crime",
-                            "tell me where the LGBT haters are and imma pull up ̿'̿'\̵͇̿̿\з=( ͠° ͟ʖ ͡°)=ε/̵͇̿̿/'̿̿ ̿ ̿ ̿ ̿ ̿",
+                            r"tell me where the LGBT haters are and imma pull up ̿'̿'\̵͇̿̿\з=( ͠° ͟ʖ ͡°)=ε/̵͇̿̿/'̿̿ ̿ ̿ ̿ ̿ ̿",
                             "Y’all means all",
                             "Bottoms and tops, we all hate cops"])
 

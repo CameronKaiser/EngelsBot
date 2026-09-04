@@ -3,7 +3,7 @@ import asyncio
 import random
 import aiohttp
 import urllib.parse
-from datetime import date, timedelta, datetime
+from datetime import timedelta, datetime
 from   time     import time
 
 import discord
@@ -81,7 +81,7 @@ class SolidarityAPI:
         quickdraw_events       = {}
         quickdraw_vague_events = {}
 
-        starting_time = int((datetime.now() - timedelta(days=64)).timestamp())
+        starting_time = int((datetime.now().astimezone() - timedelta(days=64)).timestamp())
 
         finished = False
         offset = 0
@@ -92,7 +92,6 @@ class SolidarityAPI:
                 json = response.json
 
                 for event in json['data']:
-                    description = event.get('description')
                     for session in event.get('event_sessions'):
                     #   Google uses string IDs - MUST convert SolTech's int to string
                         event_session = SolidarityEvent(event, session)
@@ -125,8 +124,7 @@ class SolidarityAPI:
             if response:
                 json = response.json
 
-                for user in json['data']:
-                    attendees.append(user)
+                attendees.extend(json['data'])
 
                 offset += 100
 
@@ -288,7 +286,7 @@ class VerifyButton(discord.ui.View):
     async def create(self, interaction: discord.Interaction, button: discord.ui.Button):
         if ROLES.DSA_MEMBER in interaction.user.roles and not HelperMethods.is_admin(interaction.user.roles):
             await interaction.response.send_message(
-                content   = f"You're all good - already verified!",
+                content   = "You're all good - already verified!",
                 ephemeral = True)
             return
 
@@ -380,7 +378,7 @@ class VerificationModal(discord.ui.Modal, title="Are you a DSA Member? Let's get
 
             if solidarity_user.data['custom_user_properties']['membership-status'][0]['value'] != 'AfVqfj0n':
                 await interaction.response.send_message(
-                    content   = f"We've got you in our records, but it looks like your membership dues have expired. If you re-enable your membership with National, we can get you back in!",
+                    content   = "We've got you in our records, but it looks like your membership dues have expired. If you re-enable your membership with National, we can get you back in!",
                     ephemeral = True)
                 await CHANNELS.BOT_TESTING.send(f"Verification attempt by {interaction.user.mention}:\n> We've got you in our records, but it looks like your membership dues have expired. If you re-enable your membership with National, we can get you back in!")
                 return
@@ -428,7 +426,7 @@ class VerificationModal(discord.ui.Modal, title="Are you a DSA Member? Let's get
             try:
                 custom_properties = solidarity_user.data.get('custom_user_properties')
                 payload = {'custom_user_properties': {}}
-                payload['custom_user_properties']['date-verified-in-discord'] = str(date.today())
+                payload['custom_user_properties']['date-verified-in-discord'] = str(datetime.now().astimezone().date())
                 if custom_properties.get('discord-handle') is None:
                     payload['custom_user_properties']['discord-handle'] = user.name
 

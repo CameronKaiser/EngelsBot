@@ -46,7 +46,7 @@ class Recruitment_Drive_Processor:
         counter = 1
         for chapter in relative_increase:
             chapter_name = chapter['chapter']
-            value = '{0:.2f}'.format(chapter['relative_increase']) + '%'
+            value = '{:.2f}'.format(chapter['relative_increase']) + '%'
 
             if chapter['chapter'] == 'Sonoma County':
                 chapter_name = chapter_name.upper()

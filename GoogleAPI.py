@@ -1,4 +1,3 @@
-import os
 import json
 import asyncio
 from datetime import datetime, timedelta
@@ -68,8 +67,8 @@ class GoogleApi:
             if not page_token:
                 finished = True
 
-        now  = (datetime.now() - timedelta(days= 64)).astimezone().isoformat()
-        then = (datetime.now() + timedelta(days=185)).astimezone().isoformat()
+        now  = (datetime.now().astimezone() - timedelta(days= 64)).isoformat()
+        then = (datetime.now().astimezone() + timedelta(days=185)).isoformat()
 
         for calendar_id in calendar_ids:
 

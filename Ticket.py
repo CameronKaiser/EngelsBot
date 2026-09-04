@@ -1,6 +1,7 @@
 # Standard Library
 import asyncio
 import os
+from pathlib import Path
 
 # Third Party
 import discord
@@ -156,8 +157,7 @@ class CloseTicketButton(discord.ui.View):
             messages.append(message_to_send)
 
         file_name = f'{FILES_FILE_PATH}{interaction.channel.name}.txt'
-        with open(file_name, "w", encoding="utf-8") as f:
-            f.write("\n".join(reversed(messages)))
+        await asyncio.to_thread(Path(file_name).write_text, "\n".join(reversed(messages)), encoding="utf-8")
 
         closer = f'{interaction.user.name} ({interaction.user.display_name})'
 
