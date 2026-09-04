@@ -2,7 +2,6 @@
 import asyncio
 import datetime
 import random
-import statistics
 from apscheduler.schedulers.asyncio import AsyncIOScheduler
 from apscheduler.triggers.cron      import CronTrigger
 
@@ -291,7 +290,6 @@ async def on_raw_reaction_remove(payload):
             role = C.GUILD.get_role(role_id)
             await user.remove_roles(role)
 
-    return
 
 # Automatically follows all users to a thread. Note: may not work - we may need to make a post and edit pings into it, rather than use no_ping
 @client.event
@@ -312,7 +310,7 @@ async def on_thread_create(thread):
 # -------------------------------------------------------------------------------------------------------------------------------------------------------------
 
 @tree.command(name="sync_commands", description="Syncs commands to the server", guild=discord.Object(id=GUILD_ID))
-async def slash_command(interaction: discord.Interaction):
+async def sync_commands(interaction: discord.Interaction):
     if not is_admin(interaction.user.roles):
         await interaction.response.send_message('sorry boss, admin only') # type: ignore
         return
@@ -321,7 +319,7 @@ async def slash_command(interaction: discord.Interaction):
     await interaction.response.send_message('Commands Synced!') # type: ignore
 
 @tree.command(name="sync_calendar_tags", description="Sync calendar tags to Engels. Note: You still need to update the javascript on events page", guild=discord.Object(id=GUILD_ID))
-async def slash_command(interaction: discord.Interaction):
+async def sync_calendar_tags(interaction: discord.Interaction):
     if not is_admin(interaction.user.roles):
         await interaction.response.send_message('sorry boss, admin only') # type: ignore
         return
@@ -335,7 +333,7 @@ async def slash_command(interaction: discord.Interaction):
 
 
 @tree.command(name="sync_events", description="Syncs all events from Solidarity Tech to Google Calendar", guild=discord.Object(id=GUILD_ID))
-async def slash_command(interaction: discord.Interaction):
+async def sync_events(interaction: discord.Interaction):
     if not is_admin(interaction.user.roles):
         await interaction.response.send_message('sorry boss, admin only') # type: ignore
         return
@@ -360,7 +358,7 @@ async def event_autocomplete(interaction: discord.Interaction, entry: str):
 
 @tree.command(name="ping_event_attendees", description="Makes Engels ping all attendees of an event session (if username is in soltech)", guild=discord.Object(id=GUILD_ID))
 @discord.app_commands.autocomplete(event=event_autocomplete)
-async def slash_command(interaction: discord.Interaction, event: str):
+async def ping_event_attendees(interaction: discord.Interaction, event: str):
     if not is_admin(interaction.user.roles):
         await interaction.response.send_message('sorry boss, admin only') # type: ignore
         return
@@ -393,7 +391,7 @@ async def slash_command(interaction: discord.Interaction, event: str):
 
 @tree.command(name="delete_event_lineup", description="Deletes all event session under the selected name", guild=discord.Object(id=GUILD_ID))
 @discord.app_commands.autocomplete(event_name=event_autocomplete)
-async def slash_command(interaction: discord.Interaction, event_name: str):
+async def delete_event_lineup(interaction: discord.Interaction, event_name: str):
     if not is_admin(interaction.user.roles):
         await interaction.response.send_message('sorry boss, admin only') # type: ignore
         return
@@ -414,7 +412,7 @@ async def slash_command(interaction: discord.Interaction, event_name: str):
     await interaction.response.send_message(f"Successfully deleted the following event sessions: {', '.join(deleted_events)}{failure_clause}\nIf you want them off the calendar, you still need to sync.")
 
 @tree.command(name="summon_forum_digest", description="Summons a forum digest ranking threads and forum posts", guild=discord.Object(id=GUILD_ID))
-async def slash_command(interaction: discord.Interaction):
+async def summon_forum_digest(interaction: discord.Interaction):
     if not is_admin(interaction.user.roles):
         await interaction.response.send_message('sorry boss, admin only') # type: ignore
         return
@@ -425,7 +423,7 @@ async def slash_command(interaction: discord.Interaction):
     await interaction  .delete_original_response(                           )
 
 @tree.command(name="simulate_user_join", description="Simulates the joining of a new discord user for testing", guild=discord.Object(id=GUILD_ID))
-async def slash_command(interaction: discord.Interaction):
+async def simulate_user_join(interaction: discord.Interaction):
     if not is_admin(interaction.user.roles):
         await interaction.response.send_message('sorry boss, admin only') # type: ignore
         return
@@ -448,7 +446,7 @@ async def slash_command(interaction: discord.Interaction):
         ephemeral = True)
 
 @tree.command(name="get_channel_leaderboard", description="Gets statistics on channels. Don't spam this", guild=discord.Object(id=GUILD_ID))
-async def slash_command(interaction: discord.Interaction, months: int):
+async def get_channel_leaderboard(interaction: discord.Interaction, months: int):
     if not is_admin(interaction.user.roles):
         await interaction.response.send_message("sorry boss, that's for admins only") # type: ignore
         return
@@ -459,7 +457,7 @@ async def slash_command(interaction: discord.Interaction, months: int):
 
     await interaction.response.defer() # type: ignore
 
-    start_date = datetime.datetime.now() - datetime.timedelta(days=months * 31)
+    start_date = datetime.datetime.now().astimezone() - datetime.timedelta(days=months * 31)
     channels   = {}
 
     for channel in C.GUILD.text_channels:
@@ -512,7 +510,7 @@ async def slash_command(interaction: discord.Interaction, months: int):
                                     f'they have access to - feel free to forward wherever.')
 
 @tree.command(name="spawn_ticket_system", description="Spawns a ticket requesting system in the channel input", guild=discord.Object(id=GUILD_ID))
-async def slash_command(interaction: discord.Interaction, channel_id: str):
+async def spawn_ticket_system(interaction: discord.Interaction, channel_id: str):
     if not is_admin(interaction.user.roles):
         await interaction.response.send_message("sorry boss, that's for admins only") # type: ignore
         return
@@ -532,7 +530,7 @@ async def slash_command(interaction: discord.Interaction, channel_id: str):
         await interaction.response.send_message(f'shit borked idk, prolly add a proper channel ID ({e})') # type: ignore
 
 @tree.command(name="spawn_verify_system", description="Spawns the verification system in the channel input", guild=discord.Object(id=GUILD_ID))
-async def slash_command(interaction: discord.Interaction, channel_id: str):
+async def spawn_verify_system(interaction: discord.Interaction, channel_id: str):
     if not is_admin(interaction.user.roles):
         await interaction.response.send_message("sorry boss, that's for admins only") # type: ignore
         return
@@ -552,7 +550,7 @@ async def slash_command(interaction: discord.Interaction, channel_id: str):
         await interaction.response.send_message(f'shit borked idk, prolly add a proper channel ID ({e})') # type: ignore
 
 @tree.command(name="spawn_role_hub", description="Spawns the role hub in the channel input", guild=discord.Object(id=GUILD_ID))
-async def slash_command(interaction: discord.Interaction, channel_id: str):
+async def spawn_role_hub(interaction: discord.Interaction, channel_id: str):
     if not is_admin(interaction.user.roles):
         await interaction.response.send_message("sorry boss, that's for admins only") # type: ignore
         return
@@ -572,7 +570,7 @@ async def slash_command(interaction: discord.Interaction, channel_id: str):
         await interaction.response.send_message(f'shit borked idk, prolly add a proper channel ID ({e})') # type: ignore
 
 @tree.command(name="spawn_action_hub", description="Spawns the action hub in the channel input", guild=discord.Object(id=GUILD_ID))
-async def slash_command(interaction: discord.Interaction, channel_id: str):
+async def spawn_action_hub(interaction: discord.Interaction, channel_id: str):
     if not is_admin(interaction.user.roles):
         await interaction.response.send_message("sorry boss, that's for admins only") # type: ignore
         return
@@ -592,7 +590,7 @@ async def slash_command(interaction: discord.Interaction, channel_id: str):
         await interaction.response.send_message(f'shit borked idk, prolly add a proper channel ID ({e})') # type: ignore
 
 @tree.command(name="replicate_role", description="Finds all members with input role and adds new role to them", guild=discord.Object(id=GUILD_ID))
-async def slash_command(interaction: discord.Interaction, existing_role_id: str, new_role_id: str):
+async def replicate_role(interaction: discord.Interaction, existing_role_id: str, new_role_id: str):
     if not is_admin(interaction.user.roles):
         await interaction.response.send_message("sorry boss, that's for admins only") # type: ignore
         return
@@ -617,7 +615,7 @@ async def slash_command(interaction: discord.Interaction, existing_role_id: str,
         await interaction.followup.send_message(f'shit borked idk, prolly add a proper role ID ({e})') # type: ignore
 
 @tree.command(name="quorum_check", description="Tallies the number of voting members in #DSA Member Voice", guild=discord.Object(id=GUILD_ID))
-async def slash_command(interaction: discord.Interaction):
+async def quorum_check(interaction: discord.Interaction):
     if not is_admin(interaction.user.roles):
         await interaction.response.send_message("sorry boss, that's for admins only") # type: ignore
         return
@@ -631,7 +629,7 @@ async def slash_command(interaction: discord.Interaction):
     await interaction.response.send_message(f"There are {voting_members} voting members in {CHANNELS.DSA_VOICE.mention}.")
 
 @tree.command(name="sync_airtable", description="Updates the members airtable with current information", guild=discord.Object(id=GUILD_ID))
-async def slash_command(interaction: discord.Interaction):
+async def sync_airtable(interaction: discord.Interaction):
     if not is_admin(interaction.user.roles):
         await interaction.response.send_message("sorry boss, that's for admins only") # type: ignore
         return
@@ -653,11 +651,11 @@ async def slash_command(interaction: discord.Interaction):
         await interaction.response.send_message(f'shit borked idk ({e})') # type: ignore
 
 @tree.command(name="sus", description="when something is sus", guild=discord.Object(id=GUILD_ID))
-async def slash_command(interaction: discord.Interaction):
+async def sus(interaction: discord.Interaction):
     await interaction.response.send_message(file=discord.File(Configuration.FILES_FILE_PATH + "Sus.mp3"))
 
 @tree.command(name="sync_airtable_analytics", description="Heavy data crunching. Don't spam this", guild=discord.Object(id=GUILD_ID))
-async def slash_command(interaction: discord.Interaction):
+async def sync_airtable_analytics(interaction: discord.Interaction):
     if not is_admin(interaction.user.roles):
         await interaction.response.send_message("sorry boss, that's for admins only") # type: ignore
         return
@@ -670,7 +668,7 @@ async def slash_command(interaction: discord.Interaction):
         for member in C.GUILD.members:
             members[member.name] = Member(member)
 
-        last_month = datetime.datetime.now() - datetime.timedelta(days=31)
+        last_month = datetime.datetime.now().astimezone() - datetime.timedelta(days=31)
         total_messages = 0
         for channel in C.GUILD.text_channels:
             async for message in channel.history(after=last_month, limit=None):
@@ -697,19 +695,15 @@ async def slash_command(interaction: discord.Interaction):
                 total_messages += 1
 
         counts = []
-        for member in members:
-            member_object = members[member]
-
+        for member_object in members.values():
             if member_object.message_count > 0:
                 counts.append(member_object.message_count)
 
-        median = statistics.median(counts)
         q1, q3 = np.percentile(counts, [25, 75])
 
         print(f'q1 = {q1} and q3 = {q3}')
 
-        for member in members:
-            member_object = members[member]
+        for member_object in members.values():
             message_count = member_object.message_count
 
             relative_activity_level = None
@@ -744,7 +738,7 @@ async def slash_command(interaction: discord.Interaction):
         await interaction.response.send_message(f'shit borked idk ({e})') # type: ignore
 
 @tree.command(name="forumize_category", description="Will convert an entire category into forums. Enter ID of category and name of forum", guild=discord.Object(id=GUILD_ID))
-async def slash_command(interaction: discord.Interaction, id: str, name: str):
+async def forumize_category(interaction: discord.Interaction, id: str, name: str):
     if not is_admin(interaction.user.roles):
         await interaction.response.send_message("sorry boss, that's for admins only") # type: ignore
         return
@@ -869,7 +863,7 @@ async def on_message(message):
                 await message.channel.send(f'quote #{quote_number} does not exist')
 
             else:
-                await message.channel.send(f'give me a number numbnuts')
+                await message.channel.send('give me a number numbnuts')
 
             return
 
@@ -909,7 +903,7 @@ async def on_message(message):
             await message.channel.send(f'stream pull is borked sorry ({error})')
             return
 
-        now  = datetime.datetime.now()
+        now  = datetime.datetime.now().astimezone()
         time = now.strftime("%I:%M%p").lower()
 
         await message.channel.send(content=f"Santa Rosa Courthouse Square on {now.strftime('%B')} {now.day}, {now.year} ~ {time}", file=discord.File(f'{C.IMAGE_FILE_PATH}square.jpg'))

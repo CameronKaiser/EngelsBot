@@ -1,5 +1,5 @@
 import discord
-from Configuration import CHANNELS, MEMBERS, ROLES, MESSAGES, EMOJIS, BRANCHES, FORUMTAGS, STEERING_EMAIL
+from Configuration import CHANNELS, MEMBERS, ROLES, FORUMTAGS, STEERING_EMAIL
 from Ticket import TicketModal
 
 
@@ -8,7 +8,7 @@ class DiscordButtonHub(discord.ui.View):
         #   We have to initialize the button and add the emoji after in the constructor otherwise it seems to initialize asychronously which means it
         #   happens before the EMOJIS class is hydrated, meaning it tries to inject an int, which fails. Time travel I guess, I don't know
         super().__init__(timeout=None)
-        button = self.remove
+    #   button = self.remove
     #   button.emoji = EMOJIS.ROSA or '✔️'
 
     async def interaction_check(self, interaction: discord.Interaction) -> bool:
@@ -23,54 +23,54 @@ class DiscordButtonHub(discord.ui.View):
     async def remove(self, interaction: discord.Interaction, button: discord.ui.Button):
         await interaction.user.remove_roles(ROLES.SOCIALITE, ROLES.PUNDIT, ROLES.JOANNA_CAMPAIGNER, ROLES.ANTIFLOCKER)
         await interaction.user.add_roles(ROLES.DSA_DISCORDER)
-        await interaction.response.send_message(f'All roles and channels have been reset to their defaults.', ephemeral=True)
+        await interaction.response.send_message('All roles and channels have been reset to their defaults.', ephemeral=True)
 
     @discord.ui.button(emoji="🙋", row=1, label="Toggle social / chat channels \u200b \u200b \u200b \u200b \u200b", style=discord.ButtonStyle.green, custom_id='toggle_social_role_button')
     async def toggle_social(self, interaction: discord.Interaction, button: discord.ui.Button):
         if ROLES.SOCIALITE not in interaction.user.roles:
             await interaction.user.add_roles(ROLES.SOCIALITE)
-            await interaction.response.send_message(f"Social role added - you'll see the added social channels on the left!", ephemeral=True)
+            await interaction.response.send_message("Social role added - you'll see the added social channels on the left!", ephemeral=True)
         else:
             await interaction.user.remove_roles(ROLES.SOCIALITE)
-            await interaction.response.send_message(f"Social role removed.", ephemeral=True)
+            await interaction.response.send_message("Social role removed.", ephemeral=True)
 
     @discord.ui.button(emoji="🗞️", row=1, label="Toggle news / theory channels", style=discord.ButtonStyle.green, custom_id='toggle_theory_button')
     async def toggle_theory(self, interaction: discord.Interaction, button: discord.ui.Button):
         if ROLES.PUNDIT not in interaction.user.roles:
             await interaction.user.add_roles(ROLES.PUNDIT)
-            await interaction.response.send_message(f"Pundit role added - you'll see the added news/theory channels on the left!", ephemeral=True)
+            await interaction.response.send_message("Pundit role added - you'll see the added news/theory channels on the left!", ephemeral=True)
         else:
             await interaction.user.remove_roles(ROLES.PUNDIT)
-            await interaction.response.send_message(f"Pundit role removed.", ephemeral=True)
+            await interaction.response.send_message("Pundit role removed.", ephemeral=True)
 
     @discord.ui.button(emoji="📈", row=2, label="Toggle Joanna Campaign Focus \u200b", style=discord.ButtonStyle.red, custom_id='toggle_joanna_button')
     async def toggle_joanna(self, interaction: discord.Interaction, button: discord.ui.Button):
         if ROLES.JOANNA_CAMPAIGNER not in interaction.user.roles:
             await interaction.user.remove_roles(ROLES.SOCIALITE, ROLES.PUNDIT, ROLES.DSA_DISCORDER)
             await interaction.user.add_roles(ROLES.JOANNA_CAMPAIGNER)
-            await interaction.response.send_message(f"Joanna Campaign focused - all non-critical channels hidden", ephemeral=True)
+            await interaction.response.send_message("Joanna Campaign focused - all non-critical channels hidden", ephemeral=True)
         else:
             await interaction.user.add_roles(ROLES.DSA_DISCORDER)
             await interaction.user.remove_roles(ROLES.JOANNA_CAMPAIGNER)
-            await interaction.response.send_message(f"General channel visibility restored", ephemeral=True)
+            await interaction.response.send_message("General channel visibility restored", ephemeral=True)
 
     @discord.ui.button(emoji="📷", row=2, label="Toggle Anti-Flock Focus \u200b \u200b \u200b \u200b \u200b \u200b \u200b \u200b \u200b \u200b \u200b \u200b", style=discord.ButtonStyle.red, custom_id='toggle_flock_button')
     async def toggle_flock(self, interaction: discord.Interaction, button: discord.ui.Button):
         if ROLES.ANTIFLOCKER not in interaction.user.roles:
             await interaction.user.remove_roles(ROLES.SOCIALITE, ROLES.PUNDIT, ROLES.DSA_DISCORDER)
             await interaction.user.add_roles(ROLES.ANTIFLOCKER)
-            await interaction.response.send_message(f"Flock initiative focused - all non-critical channels hidden", ephemeral=True)
+            await interaction.response.send_message("Flock initiative focused - all non-critical channels hidden", ephemeral=True)
         else:
             await interaction.user.add_roles(ROLES.DSA_DISCORDER)
             await interaction.user.remove_roles(ROLES.ANTIFLOCKER)
-            await interaction.response.send_message(f"General channel visibility restored", ephemeral=True)
+            await interaction.response.send_message("General channel visibility restored", ephemeral=True)
 
 class ActionHub(discord.ui.View):
     def __init__(self):
         #   We have to initialize the button and add the emoji after in the constructor otherwise it seems to initialize asychronously which means it
         #   happens before the EMOJIS class is hydrated, meaning it tries to inject an int, which fails. Time travel I guess, I don't know
         super().__init__(timeout=None)
-        button = self.remove
+    #   button = self.remove
     #   button.emoji = EMOJIS.ROSA or '✔️'
 
     async def interaction_check(self, interaction: discord.Interaction) -> bool:
@@ -91,7 +91,7 @@ class ActionHub(discord.ui.View):
 
     @discord.ui.button(emoji="🏷", row=1, label="Purchase Reimbursement Form \u200b \u200b \u200b \u200b \u200b \u200b \u200b \u200b \u200b \u200b \u200b \u200b", style=discord.ButtonStyle.blurple, custom_id='reimbursement_button')
     async def reimbursement(self, interaction: discord.Interaction, button: discord.ui.Button):
-        await interaction.response.send_message(f'Please use the following link to submit a reimbursement request: https://form.jotform.com/261456838739069',ephemeral=True)
+        await interaction.response.send_message('Please use the following link to submit a reimbursement request: https://form.jotform.com/261456838739069',ephemeral=True)
 
     @discord.ui.button(emoji="📊", row=1, label="Ask our Treasurer Anything \u200b \u200b \u200b \u200b \u200b \u200b \u200b \u200b \u200b \u200b \u200b \u200b \u200b \u200b \u200b", style=discord.ButtonStyle.blurple, custom_id='treasurer_button')
     async def treasurer(self, interaction: discord.Interaction, button: discord.ui.Button):

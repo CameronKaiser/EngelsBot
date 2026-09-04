@@ -1,4 +1,8 @@
 [lint]
-# Bot style intentionally catches errors in a way ruff doesn't like, so that 
-# it can send the error into Discord and keep running.
-ignore = ["BLE001"]
+# BLE001: Bot style intentionally catches errors in a way ruff doesn't like,
+# so that it can send the error into Discord and keep running.
+# RUF012: class-level registries (CHANNELS, ROLES, ...) are constants
+# hydrated once at startup, not shared mutable state.
+# I001: import blocks use the codebase's hand-aligned style; isort would
+# flatten the alignment.
+ignore = ["BLE001", "I001", "RUF012"]

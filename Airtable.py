@@ -1,11 +1,10 @@
 # Third Party
-from random import randint
 
 from   pyairtable import Api
-from pyairtable.formulas import AND, GTE, Field, match
+from pyairtable.formulas import match
 
 # Local Modules
-from Configuration import (AIRTABLE_API_KEY, AIRTABLE_BASE_ID, AIRTABLE_MEMBERS_TABLE_ID, AIRTABLE_TICKETS_TABLE_ID, AIRTABLE_VARIABLES_TABLE_ID,
+from Configuration import (AIRTABLE_API_KEY, AIRTABLE_BASE_ID, AIRTABLE_MEMBERS_TABLE_ID, AIRTABLE_TICKETS_TABLE_ID,
                            AIRTABLE_QUOTES_TABLE_ID, AIRTABLE_CONFIGURATION_TABLE_ID)
 from   Models        import Quote
 import Mutables
@@ -100,7 +99,7 @@ def upload_quote(quote, user_id, message_id, jump_url):
 def delete_quote(quote):
     try:
         quote_table  = api.table(AIRTABLE_BASE_ID, AIRTABLE_QUOTES_TABLE_ID)
-        response     = quote_table.delete(quote.airtable_id)
+        quote_table.delete(quote.airtable_id)
 
         del Mutables.quote_cache[quote.number]
 

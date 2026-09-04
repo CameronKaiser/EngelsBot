@@ -172,8 +172,8 @@ async def get_sonoma_election_link():
 
         await page.goto("https://results.enr.clarityelections.com/CA/Sonoma/126199/web.345435/#/summary", wait_until="networkidle")
 
-        await page.wait_for_selector(f"[aria-label='Download Summary CSV']")
-        element = await page   .query_selector(f"[aria-label='Download Summary CSV']")
+        await page.wait_for_selector("[aria-label='Download Summary CSV']")
+        element = await page   .query_selector("[aria-label='Download Summary CSV']")
         link    = await element.get_attribute ("href")
 
         await browser.close()
@@ -192,7 +192,7 @@ async def get_election_results():
     }
 
     link     = await get_sonoma_election_link()
-    response = requests.get(link, headers=headers)
+    response = await asyncio.to_thread(requests.get, link, headers=headers)
 
     gmt_time       = parsedate_to_datetime(response.headers.get("Last-Modified"))
     local_time     = gmt_time.astimezone(ZoneInfo("America/Los_Angeles"))
@@ -218,7 +218,7 @@ async def get_election_results():
                     name = row[2] if row[2] == 'MELANIE BAGBY' else row[2].title()
                     bagby_results.append([name, format(int(row[4]), ","), row[5] + '%'])
 
-    response = requests.get("https://api.sos.ca.gov/returns/governor", headers=headers)
+    response = await asyncio.to_thread(requests.get, "https://api.sos.ca.gov/returns/governor", headers=headers)
 
     payload = response.json()
 
@@ -255,8 +255,6 @@ async def update_events(client):
     except Exception as error:
         return f"Encountered error during event retrieval - deferring action so as to preserve calendar: {error}"
 
-    engels_id = '15c2778ff1500632209a3609f5dea164325b8db50375c24ebea8e22e3ab8dca8@group.calendar.google.com'
-
     updated  = 0
     added    = 0
     deleted  = 0
@@ -268,7 +266,7 @@ async def update_events(client):
 
         if solidarity_event_id in google_events:
             google_event = google_events[solidarity_event_id]
-            if not solidarity_event == google_event:
+            if solidarity_event != google_event:
                 response = await client.google_api.update_event(solidarity_event.payload)
                 print(f"Event updated: {response}")
                 updated += 1
@@ -291,7 +289,7 @@ async def update_events(client):
 
 async def announce_events(client):
     events = client.solidarity_api.cached_events
-    for key, event in events.items():
+    for event in events.values():
         minutes_away = int((event.start_time - datetime.datetime.now().astimezone(ZoneInfo("America/Los_Angeles"))).total_seconds() // 60) + 1
         if 5 < minutes_away <= 60 and not event.virtual_pair:
             message = f"### {event.vague_title} is happening in {minutes_away} minutes!\n" \
@@ -311,7 +309,7 @@ async def compile_meeting_message():
 
     url = "https://santa-rosa.legistar.com/DepartmentDetail.aspx?ID=17190&GUID=2FBCEAF9-1480-46F3-B6E3-855EC2714EA4&Mode=MainBody"
 
-    resp = requests.get(url)
+    resp = await asyncio.to_thread(requests.get, url)
 
     soup = BeautifulSoup(resp.text, "html.parser")
 
@@ -329,7 +327,7 @@ async def compile_meeting_message():
     accessible_agenda_element = values[6].find('a')
     if accessible_agenda_element:
         accessible_agenda_url = f"https://santa-rosa.legistar.com/{accessible_agenda_element.get('href')}"
-        accessible_agenda_dom = requests.get(accessible_agenda_url)
+        accessible_agenda_dom = await asyncio.to_thread(requests.get, accessible_agenda_url)
         accessible_agenda     = BeautifulSoup(accessible_agenda_dom.text, "html.parser")
         spans = accessible_agenda.find_all("span")
 
@@ -341,7 +339,7 @@ async def compile_meeting_message():
 
     flock_detected = False
     details_url = f"https://santa-rosa.legistar.com/{values[4].find('a').get('href')}"
-    details_dom = requests.get(details_url)
+    details_dom = await asyncio.to_thread(requests.get, details_url)
     details     = BeautifulSoup(details_dom.text, "html.parser")
     grid        = details.find(id="ctl00_ContentPlaceHolder1_gridMain")
     body        = grid.find("tbody")
@@ -355,7 +353,7 @@ async def compile_meeting_message():
     date     = values[0].get_text(strip=True)
     time     = values[2].get_text(strip=True)
     if detailed_time:
-        time = re.split(r'p\.m\.', detailed_time.get_text(strip=True), flags=re.I)[0] + "P.M."
+        time = re.split(r'p\.m\.', detailed_time.get_text(strip=True), flags=re.IGNORECASE)[0] + "P.M."
     location = values[3].get_text(strip=True).replace("\r\n", " ")
     title    = "Santa Rosa City Council Meeting"
     agenda_url = None
@@ -422,7 +420,7 @@ async def compile_meeting_message():
                     agenda_url = "https://cityofpetaluma.primegov.com" + await links[0].get_attribute("href")
                     if len(links) > 1:
                         accessible_agenda_url = "https://cityofpetaluma.primegov.com" + await links[1].get_attribute("href")
-                        accessible_agenda_dom = requests.get(accessible_agenda_url)
+                        accessible_agenda_dom = await asyncio.to_thread(requests.get, accessible_agenda_url)
                         accessible_agenda = BeautifulSoup(accessible_agenda_dom.text, "html.parser")
 
                         divs = accessible_agenda.find(id="MeetingContents").find_all("div")
@@ -501,7 +499,7 @@ async def compile_meeting_message():
                 #   Revisit when meeting is closer so we know structure
                     if len(links) > 5:
                         accessible_agenda_url = "https://cotaticity.primegov.com" + await links[1].get_attribute("href")
-                        accessible_agenda_dom = requests.get(accessible_agenda_url)
+                        accessible_agenda_dom = await asyncio.to_thread(requests.get, accessible_agenda_url)
                         accessible_agenda = BeautifulSoup(accessible_agenda_dom.text, "html.parser")
 
                         divs = accessible_agenda.find(id="MeetingContents").find_all("div")
@@ -564,7 +562,7 @@ async def compile_meeting_message():
         for event in rohnert_park_events:
             parts = await event.locator("td").all()
             first_part = (await parts[0].inner_text()).lower()
-            if "city council" in first_part and not "cancel" in first_part and not "closed" in first_part:
+            if "city council" in first_part and "cancel" not in first_part and "closed" not in first_part:
                 date_string = (await parts[1].inner_text()).split(" - ")
 
                 flock_detected = False
@@ -602,7 +600,7 @@ def grab_square_image():
         cap.release()
     else:
         cap.release()
-        raise Exception
+        raise RuntimeError("Could not read a frame from the stream")
 
 def generate_spam_warning(message):
 
@@ -653,7 +651,7 @@ def tableize(array):
     return table
 
 async def create_forum_digest(client, channel_to_post):
-    start_date = datetime.datetime.now() - datetime.timedelta(weeks=1)
+    start_date = datetime.datetime.now().astimezone() - datetime.timedelta(weeks=1)
     threads    = {}
 
     for channel in C.GUILD.text_channels:
@@ -685,8 +683,8 @@ async def create_forum_digest(client, channel_to_post):
         else:
             threads[thread]  = messages
 
-    response = f"## Weekly Forum Digest\n" \
-               f"Here are the most active threads / forum posts you may have missed this week!"
+    response = "## Weekly Forum Digest\n" \
+               "Here are the most active threads / forum posts you may have missed this week!"
 
     sorted_threads = sorted(threads.items(), key=lambda x: x[1], reverse=True)
 

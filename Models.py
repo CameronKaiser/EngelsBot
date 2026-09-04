@@ -1,6 +1,6 @@
 # Local Modules
 from datetime import datetime
-from typing          import Any, Dict, Optional
+from typing          import Any
 from dataclasses     import dataclass
 from dateutil.parser import isoparse
 
@@ -18,8 +18,8 @@ class Endpoint:
 class Response:
     status  : int
     url     : str
-    headers : Dict[str, str]
-    json    : Optional[Dict[str, Any]]
+    headers : dict[str, str]
+    json    : dict[str, Any] | None
 
     @property
     def ok(self) -> bool:
@@ -63,8 +63,8 @@ class SolidarityEvent:
         self.end_time     = datetime.fromisoformat(session[  'end_time'].replace("Z", "+00:00"))
         self.tags         = [tag.replace('_', '').replace('-', '').lower() for tag in event.get('tags') + event.get('campaign_tags') + session.get('tags')]
         self.scope_id     = event.get('scope_id')
-        self.private      = True if 'private' in self.tags else False
-        self.virtual_pair = True if session.get('paired_meci_id') and str(session.get('event_type')) == 'virtual' else False
+        self.private      = 'private' in self.tags
+        self.virtual_pair = bool(session.get('paired_meci_id') and str(session.get('event_type')) == 'virtual')
         self.hide_address = event.get('hide_address_until_rsvp')
 
         description = SolidarityEvent.build_description(event, session)
