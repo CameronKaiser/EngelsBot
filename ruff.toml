@@ -1,0 +1,4 @@
+[lint]
+# Bot style intentionally catches errors in a way ruff doesn't like, so that 
+# it can send the error into Discord and keep running.
+ignore = ["BLE001"]
