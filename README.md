@@ -1,5 +1,6 @@
+[![CI checks (ruff, pre-commit)](https://github.com/CameronKaiser/EngelsBot/actions/workflows/ruff.yml/badge.svg)](https://github.com/CameronKaiser/EngelsBot/actions/workflows/ruff.yml)
 
-~ EngelsBot ~
+# EngelsBot
 
 EngelsBot is an open-source Discord bot that performs functions useful to a DSA chapter (or any server, really) such as managing 
 committee signups and user tickets, compositing data, converting categories to forums, sniping spammers, and simply 
@@ -9,7 +10,7 @@ might make you think so!
 
 EngelsBot was originally created by the Sonoma County chapter, but would love to find homes in new chapters! 
 
-~ How To ~
+## How To
 
 There are a couple important things you'll want to know in order to set EngelsBot up in your own server
 - API Keys and other sensitives must be configured in Configuration.py. If you don't have Airtable it's okay, you won't miss much. 
@@ -23,7 +24,7 @@ There are a couple important things you'll want to know in order to set EngelsBo
   - ENGELS_BOT - Used to make sure no one infinite loops the bot somehow
 - You may run EngelsBot however you like, whether it be on a server or local device
 
-~ What The Future Looks Like ~
+## What The Future Looks Like
 
 I'd like to integrate engels with the Discord dashboard so that people less familiar with code can still use him.
 This might prove limiting, so using Airtable as a configuration realm is also something I'm considering. For now
