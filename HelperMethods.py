@@ -5,6 +5,7 @@ import random
 from email.utils import parsedate_to_datetime
 from zoneinfo import ZoneInfo
 
+import discord
 import requests
 import zipfile
 import io
@@ -17,6 +18,7 @@ import streamlink
 from playwright.async_api import async_playwright
 from bs4 import BeautifulSoup
 
+import Airtable
 import Configuration
 # Local Module
 import Mutables
@@ -700,3 +702,43 @@ async def create_forum_digest(client, channel_to_post):
         i += 1
 
     await channel_to_post.send(response)
+
+async def create_appreciation_digest(client, channel_to_post):
+
+    records = await Airtable.get_appreciation_records()
+    if not records:
+        return
+
+    users = {}
+    for record in records:
+        username = record['fields']['Username']
+
+        try:
+            user = Configuration.GUILD.get_member_named(username)
+            user_appreciations = users.get(user)
+            if not user_appreciations:
+                user_appreciations = []
+                users[user] = user_appreciations
+
+            user_appreciations.append(record['fields']['Appreciation'].replace("\n", " "))
+
+        except Exception as e:
+            record['error'] = str(e)
+            await Configuration.CHANNELS.BOT_TESTING.send(f"User {username} not taggable for appreciation - left the server? ({e})")
+
+    response = f"## Weekly Appreciation Digest\n" \
+               f"Here are the anonymous notes of appreciation members have received this week!"
+
+    for user in users:
+        response += f"\n- {user.mention}"
+
+        appreciations = users[user]
+        if len(appreciations) == 1:
+            response += f" - \"*{appreciations[0]}*\""
+        else:
+            for appreciation in appreciations:
+                response += f"\n  - \"*{appreciation}*\""
+
+    await channel_to_post.send(response, allowed_mentions=discord.AllowedMentions(users=False, roles=False, everyone=False))
+
+    await Airtable.retire_appreciation_records(records)

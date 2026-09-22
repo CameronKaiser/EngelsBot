@@ -1,4 +1,7 @@
 import discord
+
+import Airtable
+import Configuration
 from Configuration import CHANNELS, MEMBERS, ROLES, MESSAGES, EMOJIS, BRANCHES, FORUMTAGS, STEERING_EMAIL
 from Ticket import TicketModal
 
@@ -97,11 +100,22 @@ class ActionHub(discord.ui.View):
     async def treasurer(self, interaction: discord.Interaction, button: discord.ui.Button):
         await interaction.response.send_message(f'Feel free to @ {MEMBERS.TREASURER.mention} in {CHANNELS.DSA_CHATTING.mention}, DM them, or email at: treasurer@socodsa.org',ephemeral=True)
 
-    @discord.ui.button(emoji="💬", row=2, label=" Open Ticket with Steering Committee", style=discord.ButtonStyle.green, custom_id='open_ticket_button')
+    @discord.ui.button(emoji="🤍", row=2, label="Appreciate a DSA Member \u200b \u200b \u200b \u200b \u200b \u200b \u200b \u200b \u200b \u200b \u200b \u200b \u200b \u200b \u200b \u200b \u200b \u200b \u200b \u200b \u200b \u200b", style=discord.ButtonStyle.red, custom_id='appreciate_member_button')
+    async def appreciate(self, interaction: discord.Interaction, button: discord.ui.Button):
+        await interaction.response.send_message(
+            'Anonymous appreciation form - Select a member to appreciate!',
+            view=SelectMember(interaction.user, interaction.client),
+            ephemeral=True)
+
+    @discord.ui.button(emoji="❤️‍🩹", row=2, label="File a Grievance to our HGO Team \u200b \u200b", style=discord.ButtonStyle.gray, custom_id='file_grievance_button')
+    async def grievance(self, interaction: discord.Interaction, button: discord.ui.Button):
+        await interaction.response.send_message(f'Please use the following link to file a grievance: [File Grievance]({Configuration.GRIEVANCE_LINK})', ephemeral=True)
+
+    @discord.ui.button(emoji="💬", row=3, label=" Open Ticket with Steering Committee", style=discord.ButtonStyle.green, custom_id='open_ticket_button')
     async def create(self, interaction: discord.Interaction, button: discord.ui.Button):
         await interaction.response.send_modal(TicketModal(interaction.user))
 
-    @discord.ui.button(emoji="✉️", row=2, label="Open ticket with Steering via Email", style=discord.ButtonStyle.gray, custom_id='open_email_ticket_button')
+    @discord.ui.button(emoji="✉️", row=3, label="Open ticket with Steering via Email", style=discord.ButtonStyle.gray, custom_id='open_email_ticket_button')
     async def send_email_button(self, interaction: discord.Interaction, button: discord.ui.Button):
         subject = f'TICKET: {interaction.user.name} ({interaction.user.display_name}): '
 
@@ -111,6 +125,49 @@ class ActionHub(discord.ui.View):
             f"?subject={urllib.parse.quote(subject)}"
         )
         await interaction.response.send_message(f'Please use the following personalized link to email Steering Committee: [Email Steering]({url})', ephemeral=True)
+
+class SelectMember(discord.ui.View):
+    def __init__(self, user, client):
+        super().__init__(timeout=60)
+        self.user   = user
+        self.client = client
+
+    @discord.ui.select(cls=discord.ui.UserSelect, placeholder="Member you want to appreciate", min_values=1, max_values=1)
+    async def select_member(self, interaction, select):
+        member = select.values[0]
+        await interaction.response.send_modal(AppreciationModal(interaction.user, interaction.client, member=member))
+
+class AppreciationModal(discord.ui.Modal, title="Member Appreciation Form"):
+    def __init__(self, user, client, member):
+        super().__init__()
+        self.user    = user
+        self.client  = client
+        self.member  = member
+
+    appreciation = discord.ui.TextInput(
+        label=f"Leave an anonymous note for them!",
+        placeholder="You saved me hours by helping with...",
+        style=discord.TextStyle.long,
+        required=True,
+    )
+
+    async def on_submit(self, interaction: discord.Interaction):
+
+        await interaction.response.defer(ephemeral=True, thinking=True)
+
+        try:
+
+            record = {'Username': self.member.name, 'Appreciation': self.appreciation.value}
+            await Airtable.upload_record(Configuration.AIRTABLE_APPRECIATION_TABLE_ID, record)
+
+            await interaction.followup.send(f"Appreciation received for {self.member.mention}! It'll feature in the next Appreciation Digest this Saturday. Thank you so much 💖", ephemeral=True)
+
+        except Exception as error:
+            await CHANNELS.BOT_TESTING.send(f'‼️ User {self.user.mention}s appreciation request failed: {error}')
+            await interaction.followup.send(
+                content=f"We're sorry, an error occurred and we were unable to submit your appreciation. A log has been sent to the admin team and we will try to fix this ASAP!",
+                ephemeral=True)
+
 
 class LocationSetModal(discord.ui.Modal, title="Locale Role Setter"):
     def __init__(self, user, client):

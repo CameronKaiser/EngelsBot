@@ -15,6 +15,7 @@ AIRTABLE_API_KEY       = os.environ.get('DSA_AIRTABLE_API_KEY'      )
 DISCORD_API_KEY        = os.environ.get('DSA_DISCORD_API_KEY'       )
 GOOGLE_CREDENTIAL_JSON = os.environ.get('DSA_GOOGLE_CREDENTIAL_JSON')
 SOLIDARITY_API_KEY     = os.environ.get('DSA_SOLIDARITY_API_KEY')
+GRIEVANCE_LINK         = os.environ.get('GRIEVANCE_LINK')
 
 SMTP_HOST = os.environ.get('DSA_SMTP_HOST')
 SMTP_PORT = 465
@@ -31,6 +32,7 @@ AIRTABLE_TICKETS_TABLE_ID       = 'tblywbUcY7V0yRoUI'
 AIRTABLE_QUOTES_TABLE_ID        = 'tblasWZwOwKku5IJB'
 AIRTABLE_VARIABLES_TABLE_ID     = 'tbl3rwQ7zKPZmCU6E'
 AIRTABLE_CONFIGURATION_TABLE_ID = 'tblEIo6vAkQqacE2t'
+AIRTABLE_APPRECIATION_TABLE_ID  = 'tblyOllGjZMZH2bLz'
 
 GOOGLE_CALENDAR_ID          = '15c2778ff1500632209a3609f5dea164325b8db50375c24ebea8e22e3ab8dca8@group.calendar.google.com'
 # the color coder ignores case and underscores when analyzing tags, so dsaBusiness or dsa_business are fine to use in SolTech if listed as dsabusiness here
@@ -63,6 +65,21 @@ SPAM_TRIGGERS = [
     'please join our discord server', 'pay vetted tutors', 'do their homework', 'https://discord.gg/QN24TRp98D', '@everyone'        #homework scam
 ]
 
+RULES = '''# DISCORD CODE OF CONDUCT
+-# As amended by the Steering Committee on 9/17/2026.
+
+1. To be a member of the server you do not need to be a dues-paying DSA member, [but it is encouraged](<https://www.socodsa.org/join-dsa/>)! Once you are a dues-paying member, you will gain access to additional channels where chapter business is discussed.
+2. Be kind, considerate, and empathetic. This is a political space, so sensitive topics will come up. Be respectful when people seem overwhelmed or uncomfortable. Remember that this is not an anonymous internet forum; we are all neighbors who wish to create a better Sonoma County.
+3. Personal grievances with other members should be brought to our HGOs (Harassment and Grievance Officers) rather than this server. Please use the File Grievance button in #about to file a grievance.
+> See National DSA's [Code of Conduct](<https://www.dsausa.org/dsa-code-of-conduct-for-members/>) and [Unified Grievance Policy](<https://www.dsausa.org/unified-grievance-policy/>) for more.
+4. Belittling, mocking, or discriminating against others for characteristics such as race, class, religion, gender, sexuality, physical and/or mental health/ability, etc. will not be tolerated.
+5. DSA is a big tent socialist organization and our chapter has a wide range of ideologies and degrees of political experience/knowledge. In spaces such as this, discussion and disagreement on theory and political actions is common. However, we ask that you keep such discussions respectful, avoid purity testing, and conduct these conversations within #dsa-chatting or #history-and-theory.
+6. Do not encourage illegal activity and do not express intent to commit crimes. Doing so in a joking or ironic manner will not bypass this rule. This is a public space and any actions you discuss here will reflect on the chapter.
+7. No sexually explicit material is allowed.
+8. ‘Doxing,’ or publicly providing personally identifiable information about an individual, group, or organization without their consent is prohibited.
+9. This server also follows the [Discord Community Guidelines](<https://discord.com/guidelines>).'''
+
+GRIEVANCE_LINK = "https://docs.google.com/forms/d/e/1FAIpQLScRnOulSrd04uvsmO6_9RAhG89Bq4ckPs9EmIzywkkTIldJuQ/viewform"
 WELCOME_MESSAGES = ["WOOOOOOOOOOO NEW MEMBER! Let's give it up for {user}!",
                     "A new comrade walks among us, welcome {user}!"        ,
                     "BEHOLD, OUR LATEST MEMBER! Welcome {user}!"           ,

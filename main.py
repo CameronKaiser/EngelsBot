@@ -36,6 +36,7 @@ intents.message_content = True
 intents.members         = True
 intents.reactions       = True
 intents.dm_reactions    = True
+intents.guilds          = True
 
 
 client    = discord.Client(intents=intents)
@@ -86,11 +87,12 @@ async def on_ready():
 
     if not scheduler.running:
         scheduler.start()
-        scheduler.add_job(HelperMethods.create_forum_digest, CronTrigger(day_of_week = 'sun',       hour =  9), args=[client, CHANNELS.DSA_BUSINESS])
-        scheduler.add_job(client.solidarity_api.get_users  , CronTrigger(hour        = '0,4-23'              )                                      )
-        scheduler.add_job(HelperMethods.update_events      , CronTrigger(hour        = '0,4-23', minute = 58), args=[client]                       )
-      # scheduler.add_job(HelperMethods.check_election     , CronTrigger(minute      = "*/5"                 ), args=[CHANNELS.DSA_CHATTING]        )
-        scheduler.add_job(HelperMethods.announce_events    , CronTrigger(hour        = '0,5-23'              ), args=[client]                       )
+        scheduler.add_job(HelperMethods.create_forum_digest       , CronTrigger(day_of_week = 'sun',       hour = 9), args=[client, CHANNELS.DSA_BUSINESS])
+        scheduler.add_job(client.solidarity_api.get_users         , CronTrigger(hour        = '0,4-23'             )                                      )
+        scheduler.add_job(HelperMethods.update_events             , CronTrigger(hour        = '0,4-23', minute = 58), args=[client]                       )
+      # scheduler.add_job(HelperMethods.check_election            , CronTrigger(minute      = "*/5"                ), args=[CHANNELS.DSA_CHATTING]        )
+        scheduler.add_job(HelperMethods.announce_events           , CronTrigger(hour        = '0,5-23'             ), args=[client]                       )
+        scheduler.add_job(HelperMethods.create_appreciation_digest, CronTrigger(day_of_week = 'sat',       hour = 9), args=[client, CHANNELS.DSA_BUSINESS])
 
 # -------------------------------------------------------------------------------------------------------------------------------------------------------------
 #    ~ Cron Jobs ~
@@ -298,6 +300,10 @@ async def on_raw_reaction_remove(payload):
 async def on_thread_create(thread):
     no_ping = discord.AllowedMentions(users=False, roles=False, everyone=False)
 
+    if "endorsement" in thread.parent.name and "Meta" not in thread.name:
+        new_name = f"Direct Response by {thread.owner.display_name}"[:100]
+        await thread.edit(name=new_name, slowmode_delay=900)
+
     await asyncio.sleep(3)
     if thread.parent == CHANNELS.PERSONAL_REQUESTS:
         message = await thread.send(f'Engels is ensuring this thread is visible to everyone: \n\n'
@@ -333,7 +339,6 @@ async def slash_command(interaction: discord.Interaction):
     else:
         await interaction.response.send_message('No tags found. Consider checking your Airtable Configuration.')  # type: ignore
 
-
 @tree.command(name="sync_events", description="Syncs all events from Solidarity Tech to Google Calendar", guild=discord.Object(id=GUILD_ID))
 async def slash_command(interaction: discord.Interaction):
     if not is_admin(interaction.user.roles):
@@ -345,6 +350,21 @@ async def slash_command(interaction: discord.Interaction):
     diagnostics = await HelperMethods.update_events(client)
 
     await interaction.followup.send(diagnostics)
+
+@tree.command(name="summon_rules", description="Summons the rules as defined in Configuration, in the given channel", guild=discord.Object(id=GUILD_ID))
+async def slash_command(interaction: discord.Interaction, channel_id: str):
+    if not is_admin(interaction.user.roles):
+        await interaction.response.send_message('sorry boss, admin only') # type: ignore
+        return
+
+    response_chunks = HelperMethods.prepare_response(Configuration.RULES)
+
+    channel = await client.fetch_channel(int(channel_id))
+
+    for response in response_chunks:
+        message = await channel.send(response)
+
+    await interaction.response.send_message(f'Rules summoned at at: {message.jump_url}')  # type: ignore
 
 async def event_autocomplete(interaction: discord.Interaction, entry: str):
     data    = interaction.data
@@ -423,6 +443,17 @@ async def slash_command(interaction: discord.Interaction):
 
     await HelperMethods.create_forum_digest     (client, interaction.channel)
     await interaction  .delete_original_response(                           )
+
+@tree.command(name="summon_appreciation_digest", description="Summons an appreciation digest detailing latest submissinos", guild=discord.Object(id=GUILD_ID))
+async def slash_command(interaction: discord.Interaction):
+    if not is_admin(interaction.user.roles):
+        await interaction.response.send_message('sorry boss, admin only') # type: ignore
+        return
+
+    await interaction.response.defer()  # type: ignore
+
+    await HelperMethods.create_appreciation_digest(client, interaction.channel)
+    await interaction  .delete_original_response  (                           )
 
 @tree.command(name="simulate_user_join", description="Simulates the joining of a new discord user for testing", guild=discord.Object(id=GUILD_ID))
 async def slash_command(interaction: discord.Interaction):
@@ -580,7 +611,7 @@ async def slash_command(interaction: discord.Interaction, channel_id: str):
     try:
         embed = discord.Embed(
             title       = "Action Hub",
-            description = 'Use this hub to perform actions. More coming soon!',
+            description = "Use this hub to perform actions. If you click a button and don't see anything happen, scroll down! There will be a message waiting for you below.",
             color       = discord.Color.blue()
         )
 

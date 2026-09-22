@@ -6,7 +6,7 @@ from pyairtable.formulas import AND, GTE, Field, match
 
 # Local Modules
 from Configuration import (AIRTABLE_API_KEY, AIRTABLE_BASE_ID, AIRTABLE_MEMBERS_TABLE_ID, AIRTABLE_TICKETS_TABLE_ID, AIRTABLE_VARIABLES_TABLE_ID,
-                           AIRTABLE_QUOTES_TABLE_ID, AIRTABLE_CONFIGURATION_TABLE_ID)
+                           AIRTABLE_QUOTES_TABLE_ID, AIRTABLE_CONFIGURATION_TABLE_ID, AIRTABLE_APPRECIATION_TABLE_ID)
 from   Models        import Quote
 import Mutables
 
@@ -56,6 +56,10 @@ def update_members_table(members):
     table.batch_update(records_to_patch , typecast=True)
 
     return True
+
+async def upload_record(table_id, record):
+    table = api.table(AIRTABLE_BASE_ID, table_id)
+    return table.create(record, typecast=True)
 
 def upload_ticket(file_name, ticket_name, closer):
     table    = api.table(AIRTABLE_BASE_ID, AIRTABLE_TICKETS_TABLE_ID)
@@ -119,6 +123,46 @@ async def get_calendar_tags():
     except Exception as error:
         print(f'Failed to retrieve tags: {error}')
         return None
+
+async def get_appreciation_records():
+
+    try:
+        appreciation_table = api.table(AIRTABLE_BASE_ID, AIRTABLE_APPRECIATION_TABLE_ID)
+
+        appreciation_records = appreciation_table.all(formula=match({"Processed": False}))
+
+        return appreciation_records
+
+    except Exception as error:
+        print(f'Failed to retrieve tags: {error}')
+        return None
+
+
+async def retire_appreciation_records(records):
+    try:
+        appreciation_table = api.table(AIRTABLE_BASE_ID, AIRTABLE_APPRECIATION_TABLE_ID)
+
+        records_to_patch = []
+        for record in records:
+            fields = {'Processed': True}
+
+            if record.get('error'):
+                fields['Status'] = "Errored"
+                fields['Note'  ] = record['error']
+            else:
+                fields['Status'] = "Posted"
+
+            record_to_patch = {'id': record['id'], 'fields': fields}
+            records_to_patch.append(record_to_patch)
+
+            print(records_to_patch)
+
+        return appreciation_table.batch_update(records_to_patch, typecast=True)
+
+    except Exception as error:
+        print(f'Failed to retire appreciation records: {error}')
+        return None
+
 
 async def get_banned_scope_ids():
 
