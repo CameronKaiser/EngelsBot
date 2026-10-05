@@ -56,6 +56,9 @@ STEERING_TICKET_DESCRIPTION = "Need help? Have an inquiry? Click the button belo
                               "Discord. If you'd prefer to retain a copy of the conversation and don't mind a slower response time, you may open a "   \
                               "ticket via email as well. Additionally, you can always just ping us in a channel like #dsa-chatting if you'd like!"
 
+RATE_LIMIT_UTILITY = 1  # seconds, same message in same channel
+RATE_LIMIT_FUN     = 15 # seconds, per channel
+
 ENGELS_PONTIFICATE_MIN_DELAY = 60 * 60          # 1 hour
 ENGELS_PONTIFICATE_MAX_DELAY = 3 * 24 * 60 * 60 # 3 days
 

@@ -2,6 +2,7 @@
 import asyncio
 import datetime
 import random
+import time
 from email.utils import parsedate_to_datetime
 from zoneinfo import ZoneInfo
 
@@ -39,6 +40,24 @@ async def start_cooldown():
     Mutables.cooldown = True
     await asyncio.sleep(900) # 15 minutes
     Mutables.cooldown = False
+
+async def rate_limited_send(message, category, *args, **kwargs):
+    if category == 'utility':
+        key    = (message.channel.id, message.content.lower())
+        window = C.RATE_LIMIT_UTILITY
+        emoji  = '⏳'
+    else:
+        key    = message.channel.id
+        window = C.RATE_LIMIT_FUN
+        emoji  = '🐢'
+
+    now = time.monotonic()
+    if key in Mutables.last_sent and now - Mutables.last_sent[key] < window:
+        await message.add_reaction(emoji)
+        return None
+
+    Mutables.last_sent[key] = now
+    return await message.channel.send(*args, **kwargs)
 
 def prepare_response(response):
     response_chunks = []

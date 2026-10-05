@@ -23,7 +23,7 @@ import Mutables
 
 # Easy Access
 from GoogleAPI import GoogleApi
-from HelperMethods import is_admin
+from HelperMethods import (is_admin, rate_limited_send)
 from Configuration import (DISCORD_API_KEY, CATEGORIES, CHANNELS, ROLES, MEMBERS, MESSAGES, EMOJIS, GUILD_ID, REGEX)
 from Models        import Member, Quote, QuoteRequest
 import SolidarityAPI
@@ -869,7 +869,7 @@ async def on_message(message):
         response = await HelperMethods.acquire_wisdom(text)
 
         if response:
-            await message.channel.send(response)
+            await rate_limited_send(message, 'fun', response)
             return
 
     if '.quote' in text and message.channel in CHANNELS.QUOTE_PERMITTED:
@@ -877,41 +877,41 @@ async def on_message(message):
         quote_request = QuoteRequest(text)
 
         if not quote_request.valid:
-            await message.channel.send('idk what you mean dawg')
+            await rate_limited_send(message, 'fun', 'idk what you mean dawg')
             return
 
         quote_number = quote_request.number
         if quote_request.delete:
             if not admin:
-                await message.channel.send("sorry boss, that's for admins only")  # type: ignore
+                await rate_limited_send(message, 'fun', "sorry boss, that's for admins only")  # type: ignore
                 return
 
             if quote_number in Mutables.quote_cache:
                 try:
                     Airtable.delete_quote(Mutables.quote_cache[quote_number])
-                    await message.channel.send(f'Quote #{quote_number} deleted')
+                    await rate_limited_send(message, 'fun', f'Quote #{quote_number} deleted')
 
                 except Exception as error:
-                    await message.channel.send(f'Unable to delete quote ({error})')
+                    await rate_limited_send(message, 'fun', f'Unable to delete quote ({error})')
 
                 return
 
             if quote_number:
-                await message.channel.send(f'quote #{quote_number} does not exist')
+                await rate_limited_send(message, 'fun', f'quote #{quote_number} does not exist')
 
             else:
-                await message.channel.send(f'give me a number numbnuts')
+                await rate_limited_send(message, 'fun', f'give me a number numbnuts')
 
             return
 
         if quote_number:
             quote = Mutables.quote_cache.get(quote_number)
             if not quote:
-                await message.channel.send(f'quote #{quote_number} does not exist')
+                await rate_limited_send(message, 'fun', f'quote #{quote_number} does not exist')
                 return
         else:
             if len(Mutables.quote_cache) == 0:
-                await message.channel.send('there *are* no quotes!!!')
+                await rate_limited_send(message, 'fun', 'there *are* no quotes!!!')
                 return
 
             quote = random.choice(list(Mutables.quote_cache.values()))
@@ -923,12 +923,12 @@ async def on_message(message):
             color       = MEMBERS.ENGELS_BOT.color
         )
 
-        await message.channel.send(embed=embed)
+        await rate_limited_send(message, 'fun', embed=embed)
         return
 
     if 'flockwatch' in text:
         meetings = await HelperMethods.compile_meeting_message()
-        await message.channel.send(meetings)
+        await rate_limited_send(message, 'utility', meetings)
 
 #   Grabs a realtime photo of Old Courthouse Square using the livestream (currently broken due to youtube changing URL functionality)
     if ('city square' in text or 'courthouse square' in text or text == 'square' or 'santa rosa square' in text) and len(text) < 30:
@@ -937,13 +937,13 @@ async def on_message(message):
             await asyncio.to_thread(HelperMethods.grab_square_image)
 
         except Exception as error:
-            await message.channel.send(f'stream pull is borked sorry ({error})')
+            await rate_limited_send(message, 'utility', f'stream pull is borked sorry ({error})')
             return
 
         now  = datetime.datetime.now()
         time = now.strftime("%I:%M%p").lower()
 
-        await message.channel.send(content=f"Santa Rosa Courthouse Square on {now.strftime('%B')} {now.day}, {now.year} ~ {time}", file=discord.File(f'{C.IMAGE_FILE_PATH}square.jpg'))
+        await rate_limited_send(message, 'utility', content=f"Santa Rosa Courthouse Square on {now.strftime('%B')} {now.day}, {now.year} ~ {time}", file=discord.File(f'{C.IMAGE_FILE_PATH}square.jpg'))
 
     if message.reference is not None and message.reference.message_id in Mutables.thoughtful_messages:
         await message.reply(random.choice(C.ENGELS_DISSENT_MEMES))
@@ -952,9 +952,9 @@ async def on_message(message):
 
     if 'engels choose a random person to ban' in text:
         if message.author == MEMBERS.CALVIN:
-            await message.channel.send('i already chose you unc')
+            await rate_limited_send(message, 'fun', 'i already chose you unc')
         else:
-            await message.channel.send(MEMBERS.CALVIN.mention)
+            await rate_limited_send(message, 'fun', MEMBERS.CALVIN.mention)
 
     if   'ROSA' in raw_text:
         await message.add_reaction(EMOJIS.ROSA_AGGRO)
@@ -966,7 +966,7 @@ async def on_message(message):
         results = RecruitmentDrive.Recruitment_Drive_Processor()
 
         if results.errors:
-            await message.channel.send(f'sorry boss the gig is up ({results.errors})')
+            await rate_limited_send(message, 'utility', f'sorry boss the gig is up ({results.errors})')
             return
 
         content = f'## ➕ Member Increase Leaderboard\n'                          \
@@ -978,50 +978,50 @@ async def on_message(message):
         sonoma_embed.add_field(name='Member Increase' , value=str(results.chapter_absolute_increase), inline=True)
         sonoma_embed.add_field(name='Percent Increase', value=str(results.chapter_relative_increase), inline=True)
 
-        await message.channel.send(content=content, embed=sonoma_embed)
+        await rate_limited_send(message, 'utility', content=content, embed=sonoma_embed)
         return
 
     if text == 'election results':
         results = await HelperMethods.get_election_results()
-        await message.channel.send(results)
+        await rate_limited_send(message, 'utility', results)
 
     if 'capacity meme' in text:
-        await message.channel.send(file=discord.File(random.choice(C.CAPACITY_MEMES)))
+        await rate_limited_send(message, 'fun', file=discord.File(random.choice(C.CAPACITY_MEMES)))
 
     if text == 'gulag':
-        await message.channel.send(random.choice(C.GULAG_MEMES))
+        await rate_limited_send(message, 'fun', random.choice(C.GULAG_MEMES))
 
     if 'zohran bad' in text:
-        await message.channel.send(file=discord.File(random.choice(C.ZOHRAN_BAD_MEMES)))
+        await rate_limited_send(message, 'fun', file=discord.File(random.choice(C.ZOHRAN_BAD_MEMES)))
 
     if 'sonoma' in text and 'christi' in text:
-        await message.channel.send(file=discord.File(random.choice(C.SONOMA_CHRISTI_MEMES)))
+        await rate_limited_send(message, 'fun', file=discord.File(random.choice(C.SONOMA_CHRISTI_MEMES)))
 
     if 'sonoma' in text and 'georgia' in text:
-        await message.channel.send(file=discord.File(random.choice(C.SONOMA_GEORGIA_MEMES)))
+        await rate_limited_send(message, 'fun', file=discord.File(random.choice(C.SONOMA_GEORGIA_MEMES)))
 
     if 'wtf engels'  in text or 'shut up engels' in text or 'stfu engels' in text or 'fuck you engels' in text or 'watch yourself engels' in text or \
        'engels cmon' in text or ('fuck' in text and 'engels' in text) or ('pig' in text and 'engels' in text):
         if message.author == MEMBERS.CALVIN:
-            await message.channel.send('okay unc')
+            await rate_limited_send(message, 'fun', 'okay unc')
         else:
-            await message.channel.send(random.choice(C.ENGELS_DISSENT_MEMES))
+            await rate_limited_send(message, 'fun', random.choice(C.ENGELS_DISSENT_MEMES))
 
     if 'just do a revolution' in text or 'just seize the means of production' in text:
-        await message.channel.send('https://tenor.com/view/drake-gif-25177956')
+        await rate_limited_send(message, 'fun', 'https://tenor.com/view/drake-gif-25177956')
 
     if 'i love dems' in text or 'i love democrats' in text or 'we love the dems' in text:
-        await message.channel.send('https://tenor.com/view/stop-it-get-some-help-gif-15058124')
+        await rate_limited_send(message, 'fun', 'https://tenor.com/view/stop-it-get-some-help-gif-15058124')
 
     if REGEX.AI_CHECK.search(text) and REGEX.ART_CHECK.search(text) and not Mutables.cooldown:
         asyncio.create_task(HelperMethods.start_cooldown())
-        await message.channel.send('https://tenor.com/view/ah-shit-here-we-go-again-ah-shit-cj-gta-gta-san-andreas-gif-13933485')
+        await rate_limited_send(message, 'fun', 'https://tenor.com/view/ah-shit-here-we-go-again-ah-shit-cj-gta-gta-san-andreas-gif-13933485')
 
     if REGEX.SIX_SEVEN_CHECK.search(text):
-        await message.channel.send('https://tenor.com/view/cat-67-scp-67-funyuns-funny-gif-75413186200073602')
+        await rate_limited_send(message, 'fun', 'https://tenor.com/view/cat-67-scp-67-funyuns-funny-gif-75413186200073602')
 
     if 'read theory' in text:
-        await message.channel.send(random.choice(C.SLEEPY_MEMES))
+        await rate_limited_send(message, 'fun', random.choice(C.SLEEPY_MEMES))
 
     if text == 'stalinism':
         await message.add_reaction('👻')
@@ -1033,7 +1033,7 @@ async def on_message(message):
         await message.add_reaction('😛')
 
     if 'avakian' in text:
-        await message.channel.send(file=discord.File(f'{C.IMAGE_FILE_PATH}avakian_meme.jpg'))
+        await rate_limited_send(message, 'fun', file=discord.File(f'{C.IMAGE_FILE_PATH}avakian_meme.jpg'))
 
 
 client.run(DISCORD_API_KEY)
