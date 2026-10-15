@@ -6,7 +6,7 @@ from dateutil.parser import isoparse
 
 import Mutables
 # Easy Access
-from Configuration import ROLES
+import Configuration
 from Mutables      import banned_scope_ids
 
 @dataclass
@@ -52,6 +52,22 @@ class SolidarityUser:
 
     def __init__(self, user):
         self.data = user
+        self.discord = None
+
+    async def set_user(self):
+
+        if self.data.get('custom_user_properties'):
+            discord_handle = self.data.get('custom_user_properties').get('discord-handle')
+            if discord_handle:
+                discord_user = Configuration.GUILD.get_member_named(discord_handle)
+
+                if not discord_user:
+                    members = await Configuration.GUILD.query_members(query=discord_handle, limit=1)
+
+                    if members:
+                        discord_user = members[0]
+
+                self.discord = discord_user
 
 class SolidarityEvent:
 
@@ -217,9 +233,9 @@ class Member:
         roles = member.roles
 
         for role in roles:
-            if   role in ROLES.COMMITTEES:
+            if   role in Configuration.ROLES.COMMITTEES:
                 committees   .append(role.name)
-            elif role in ROLES.ORGANIZATIONS:
+            elif role in Configuration.ROLES.ORGANIZATIONS:
                 organizations.append(role.name)
             elif role.name != '@everyone':
                 other_roles  .append(role.name)

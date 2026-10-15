@@ -49,14 +49,14 @@ scheduler = AsyncIOScheduler()
 
 @client.event
 async def on_ready():
-    client.solidarity_api = SolidarityAPI.SolidarityAPI(C.SOLIDARITY_API_KEY)
-
     print(f'{client.user.name} has connected to Discord!')
-
-    client.loop.create_task(Airtable.get_quotes())
 
     await HelperMethods.get_predefined_objects(client)
     await HelperMethods.get_branches(client)
+
+    client.solidarity_api = SolidarityAPI.SolidarityAPI(C.SOLIDARITY_API_KEY)
+
+    client.loop.create_task(Airtable.get_quotes())
 
     client.add_view(Ticket       .CreateTicketButton())
     client.add_view(Ticket       .CloseTicketButton ())
@@ -300,7 +300,7 @@ async def on_raw_reaction_remove(payload):
 async def on_thread_create(thread):
     no_ping = discord.AllowedMentions(users=False, roles=False, everyone=False)
 
-    if "endorsement" in thread.parent.name and "Meta" not in thread.name:
+    if thread.parent.topic and "motion" in thread.parent.topic and "Meta" not in thread.name:
         new_name = f"Direct Response by {thread.owner.display_name}"[:100]
         await thread.edit(name=new_name, slowmode_delay=900)
 
@@ -846,7 +846,7 @@ async def on_message(message):
 
     server = message.guild
 
-    if message.author == MEMBERS.ENGELS_BOT or server is None or server != C.GUILD:
+    if message.author.id == client.user.id or server is None or server != C.GUILD:
         return
 
     admin = is_admin(message.author.roles)

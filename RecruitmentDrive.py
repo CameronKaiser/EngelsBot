@@ -1,5 +1,6 @@
 # Standard Library
 import requests
+from curl_cffi import requests
 
 # Local Modules
 from Configuration import (RECRUITMENT_DRIVE_URL, CHAPTER_NAME)
@@ -7,8 +8,10 @@ from Configuration import (RECRUITMENT_DRIVE_URL, CHAPTER_NAME)
 class Recruitment_Drive_Processor:
     
     def __init__(self):
-        response = requests.get(RECRUITMENT_DRIVE_URL)
 
+        response = requests.get(RECRUITMENT_DRIVE_URL, impersonate="firefox")
+
+        print(response.json())
         self.absolute_increase_array = [['#', 'Chapter', 'Members']]
         self.relative_increase_array = [['#', 'Chapter', 'Increase']]
         self.chapter_absolute_increase = None
@@ -31,9 +34,10 @@ class Recruitment_Drive_Processor:
             value = str(chapter['referrals'])
 
             if chapter['chapter'] == CHAPTER_NAME:
-                chapter_name = chapter_name.upper()
-                closure = counter + 2
+                chapter_name = f"~ {chapter_name.upper()} ~"
+                closure = counter + 5
                 self.chapter_absolute_increase = value
+                del self.absolute_increase_array[:-4]
 
             self.absolute_increase_array.append([str(counter), chapter_name, value])
 
@@ -46,12 +50,13 @@ class Recruitment_Drive_Processor:
         counter = 1
         for chapter in relative_increase:
             chapter_name = chapter['chapter']
-            value = '{0:.2f}'.format(chapter['relative_increase']) + '%'
+            value = '{0:.2f}'.format(chapter['percent_increase']) + '%'
 
             if chapter['chapter'] == 'Sonoma County':
-                chapter_name = chapter_name.upper()
+                chapter_name = f"~ {chapter_name.upper()} ~"
                 closure = counter + 5
                 self.chapter_relative_increase = value
+                del self.relative_increase_array[:-4]
 
             self.relative_increase_array.append([str(counter), chapter_name, value])
             if counter == closure:

@@ -47,12 +47,39 @@ class SolidarityAPI:
                 json = response.json
 
                 for user in json['data']:
-                    self.cached_users[user['email']] = SolidarityUser(user)
+                    cached_user = SolidarityUser(user)
 
-                offset += 100
+                    await cached_user.set_user()
+
+                    #   Routine Operations
+                    if cached_user.discord:
+                        user_discord = cached_user.discord
+                        try:
+                            roles_to_sync = []
+                            soltech_roles = cached_user.data['custom_user_properties'].get('volunteeredfor')
+                            if soltech_roles:
+
+                                for role in soltech_roles:
+                                    roles_to_sync.append(role['label'])
+
+                                for volunteer_role in Configuration.SOLTECH_DISCORD_ROLE_MAP:
+                                    discord_role = Configuration.SOLTECH_DISCORD_ROLE_MAP[volunteer_role]()
+                                    if volunteer_role in roles_to_sync and (not user_discord.roles or discord_role not in user_discord.roles):
+                                        if HelperMethods.is_admin(user_discord.roles):
+                                            break
+
+                                        print(f"Adding {volunteer_role} TO {user_discord.name}")
+                                        await user_discord.add_roles(discord_role)
+
+                        except Exception as error:
+                            print(f'‼️ User {user.discord.name}s role syncing failed: {error}')
+
+                    self.cached_users[user['email']] = SolidarityUser(user)
 
                 if offset + 100 >= json['meta']['total_count']:
                     finished = True
+
+                offset += 100
 
             else:
                 finished = True
@@ -365,16 +392,16 @@ class VerificationModal(discord.ui.Modal, title="Are you a DSA Member? Let's get
 
             if not solidarity_user or (solidarity_user.data['address']['zip_code'] and solidarity_user.data['address']['zip_code'][:5] != input_zipcode):
                 await interaction.response.send_message(
-                    content   = f"Sorry, we couldn't find a user matching email {input_email} and zipcode {input_zipcode} in our records. If you believe this to be an error, please open a ticket with the Steering Committee [here]({MESSAGES.STEERING_TICKET.jump_url})\n\nNote: If you signed up to be a member within the past 4 hours, please try again later - it can take some time for the profile to be finalized in our system!",
+                    content   = f"Sorry, we couldn't find a user matching email {input_email} and zipcode {input_zipcode} in our records. If you believe this to be an error, please open a ticket with the Steering Committee here: {CHANNELS.ABOUT.mention}\n\nNote: If you signed up to be a member within the past 4 hours, please try again later - it can take some time for the profile to be finalized in our system!",
                     ephemeral = True)
-                await CHANNELS.BOT_TESTING.send(f"Verification attempt by {interaction.user.mention}:\n> Sorry, we couldn't find a user matching email {input_email} and zipcode {input_zipcode} in our records. If you believe this to be an error, please open a ticket with the Steering Committee [here]({MESSAGES.STEERING_TICKET.jump_url})\n\n> Note: If you signed up to be a member within the past 4 hours, please try again later - it can take some time for the profile to be finalized in our system!")
+                await CHANNELS.BOT_TESTING.send(f"Verification attempt by {interaction.user.mention}:\n> Sorry, we couldn't find a user matching email {input_email} and zipcode {input_zipcode} in our records. If you believe this to be an error, please open a ticket with the Steering Committee here: {CHANNELS.ABOUT.mention}\n\n> Note: If you signed up to be a member within the past 4 hours, please try again later - it can take some time for the profile to be finalized in our system!")
                 return
 
             if not solidarity_user.data['custom_user_properties']['membership-status']:
                 await interaction.response.send_message(
-                    content=f"It looks like you're not a member yet! Membership starts with DSA National and then automatically connects to us here at Sonoma County DSA. Take a minute to [sign up right now](https://act.dsausa.org/donate/membership/?source=sonoma-county-discord)!\n\nIf you believe this to be an error, please open a ticket with the Steering Committee [here]({MESSAGES.STEERING_TICKET.jump_url})\n\nNote: If you signed up to be a member within the past 4 hours, please try again later - it can take some time for the profile to be finalized in our system! Additionally, if you signed up with a dues waiver, it may take up to a week to register in our system.",
+                    content=f"It looks like you're not a member yet! Membership starts with DSA National and then automatically connects to us here at Sonoma County DSA. Take a minute to [sign up right now](https://act.dsausa.org/donate/membership/?source=sonoma-county-discord)!\n\nIf you believe this to be an error, please open a ticket with the Steering Committee here: {CHANNELS.ABOUT.mention}\n\nNote: If you signed up to be a member within the past 4 hours, please try again later - it can take some time for the profile to be finalized in our system! Additionally, if you signed up with a dues waiver, it may take up to a week to register in our system.",
                     ephemeral=True)
-                await CHANNELS.BOT_TESTING.send(f"Verification attempt by {interaction.user.mention}:\n> It looks like you're not a member yet! Membership starts with DSA National and then automatically connects to us here at Sonoma County DSA. Take a minute to [sign up right now](https://act.dsausa.org/donate/membership/?source=sonoma-county-discord)!\n\n> If you believe this to be an error, please open a ticket with the Steering Committee [here]({MESSAGES.STEERING_TICKET.jump_url})\n\n> Note: If you signed up to be a member within the past 4 hours, please try again later - it can take some time for the profile to be finalized in our system! Additionally, if you signed up with a dues waiver, it may take up to a week to register in our system.")
+                await CHANNELS.BOT_TESTING.send(f"Verification attempt by {interaction.user.mention}:\n> It looks like you're not a member yet! Membership starts with DSA National and then automatically connects to us here at Sonoma County DSA. Take a minute to [sign up right now](https://act.dsausa.org/donate/membership/?source=sonoma-county-discord)!\n\n> If you believe this to be an error, please open a ticket with the Steering Committee here: {CHANNELS.ABOUT.mention}\n\n> Note: If you signed up to be a member within the past 4 hours, please try again later - it can take some time for the profile to be finalized in our system! Additionally, if you signed up with a dues waiver, it may take up to a week to register in our system.")
                 return
 
 
@@ -464,7 +491,7 @@ class VerificationModal(discord.ui.Modal, title="Are you a DSA Member? Let's get
         except Exception as error:
             await CHANNELS.BOT_TESTING.send(f'‼️ User {user.mention}s verification failed: {error}')
             await interaction.response.send_message(
-                content   = f"We're sorry, an error occurred and we were unable to complete verification. A log has been sent to the admin team and we will try to fix this ASAP! In the meantime, feel free to verify manually by [opening a ticket with Steering Committee]({MESSAGES.STEERING_TICKET.jump_url}).",
+                content   = f"We're sorry, an error occurred and we were unable to complete verification. A log has been sent to the admin team and we will try to fix this ASAP! In the meantime, feel free to verify manually by opening a ticket with Steering Committee here: {CHANNELS.ABOUT.mention}.",
                 ephemeral = True)
 
 

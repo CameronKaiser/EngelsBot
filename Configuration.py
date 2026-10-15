@@ -48,7 +48,7 @@ DEFAULT_BANNED_SCOPE_IDS = [
     272
 ]
 
-RECRUITMENT_DRIVE_URL = 'https://falldrive.dsausa.org/api/referrals'
+RECRUITMENT_DRIVE_URL = 'https://recruit.dsausa.org/api/referrals'
 SQUARE_STREAM_URL     = 'https://www.youtube.com/watch?v=KES0RUIXg8s'
 
 STEERING_EMAIL              =  os.environ.get('DSA_STEERING_EMAIL')
@@ -169,6 +169,7 @@ class ROLES(Discord_Object_Registry):
     SONOMA              = 1445463518827778269
     NORTH               = 1445471742180065441
     WEST                = 1445471145561427978
+    RECRUITMENT_DRIVE   = 1554698510928969738
     ADMIN_LIST          = [1428192973069484033, 1359004727886483486]
     COMMITTEES          = [1384346168670289980, 1362128533345931357, 1437686190437302324, 1437681405290221650, 1361768994016854226, 1370432153346900091,
                            1366622832913678457]
@@ -215,6 +216,10 @@ REGISTRIES = [
     EMOJIS    ,
     FORUMTAGS
 ]
+
+SOLTECH_DISCORD_ROLE_MAP = {
+    'RecruitmentDrive2026': lambda: ROLES.RECRUITMENT_DRIVE
+}
 
 class Branch:
     def __init__(self, input_branch, client):
@@ -594,7 +599,13 @@ world...          |            |                      |                   |
                             "Be gay, do crime",
                             "tell me where the LGBT haters are and imma pull up ̿'̿'\̵͇̿̿\з=( ͠° ͟ʖ ͡°)=ε/̵͇̿̿/'̿̿ ̿ ̿ ̿ ̿ ̿",
                             "Y’all means all",
-                            "Bottoms and tops, we all hate cops"])
+                            "Bottoms and tops, we all hate cops"]),
+    Question(
+        trigger_words    = [['engels'], ['are'], ['we', 'you'], ['going', 'gonna'], ['be'], ['good boy']],
+        imperative_words = [['good boy', 'good bot']],
+        answers          = ["yes 🥺",
+                            "i'll do better 🥺",
+                            "i won't speak of the forbidden numbers anymore 🥺"])
 
 ]
 
